@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CompareX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+
+
+</head>
+<body>
+
+<header class="navbar">
+<div class="nav-inner">
+    <button id="menuBtn" class="menu-btn">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+<a href="#" class="logo"><span class="logo-mark">C</span><span>CompareX</span></a>
+<nav class="nav-links">
+<a href="#brands">Brands</a>
+<a href="#categories">Categories</a>
+<a href="#marketplaces">Stores</a>
+<a href="#features">Features</a>
+</nav>
+<div class="nav-right">
+
+    <button id="themeToggle" class="theme-btn">
+        <i class="fa-solid fa-moon"></i>
+    </button>
+
+<!-- Wishlist Button -->
+
+<button id="wishlistBtn" class="wishlist-btn">
+
+    <i class="fa-solid fa-heart"></i>
+
+    <span id="wishlistCount" class="wishlist-count">0</span>
+
+</button>
+
+    <!-- Cart Button -->
+    <button id="cartBtn" class="cart-btn">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cartCount" class="cart-count">0</span>
+    </button>
+
+    <button id="loginBtn" class="login-btn">
+    Login</button>
+
+</div>
+</div>
+</header>
+
+<section class="hero">
+<div class="hero-blob hero-blob1"></div>
+<div class="hero-blob hero-blob2"></div>
+<div class="hero-container">
+<div class="hero-content">
+<div class="hero-badge">✨ India's Smartest Price Comparison Platform</div>
+<h1 class="hero-title">Compare Every Price.<br><span>Save Every Rupee.</span></h1>
+<p class="hero-text">Search products or paste any shopping URL and instantly compare prices across Amazon, Flipkart, Croma, Reliance Digital, AJIO, Myntra and Nykaa.</p>
+<div class="search-mode">
+<button class="mode-btn active" id="nameMode">🔍 Product Name</button>
+<button class="mode-btn" id="urlMode">🔗 Product URL</button>
+</div>
+<div class="search-box">
+<input id="searchInput" type="text" placeholder="Search iPhone 16, PS5, MacBook Air...">
+<button id="compareBtn">Compare →</button>
+</div>
+<div class="trending-chips">
+<span>🔥 Trending</span>
+<button>iPhone 16</button><button>MacBook Air</button><button>PS5</button><button>Nothing Phone</button><button>Apple Watch</button>
+</div>
+<div class="hero-trust">
+<div class="trust-item">⭐ 15+ Stores</div>
+<div class="trust-item">⚡ Instant Comparison</div>
+<div class="trust-item">🛡️ 100% Free</div>
+</div>
+</div>
+
+<div class="hero-preview">
+<div class="preview-card">
+    <button class="wishlist-icon hero-heart">
+    <i class="fa-regular fa-heart"></i>
+</button>
+<div class="preview-top">
+<img src="imagess/iPhone.png" class="preview-product" alt="iPhone">
+<div><h3>iPhone 16 Pro</h3><span>Lowest Price Today</span></div>
+</div>
+<div class="price-list">
+<div class="price-row"><div class="store"><img src="imagess/Amazon-Logo-Background-SVG-Image-preview.webp"><span>Amazon</span></div><strong>₹72,899</strong></div>
+<div class="price-row best"><div class="store"><img src="imagess/hd-flipkart-round-logo-icon-transparent-svg-701751694966204grvmunpzzf.webp"><span>Flipkart</span></div><strong>₹70,499</strong></div>
+<div class="price-row"><div class="store"><img src="imagess/chroma_logo_positivo_nome_cores_opaco_azul.png"><span>Croma</span></div><strong>₹72,999</strong></div>
+</div>
+<div class="save-box">🎉 You Save<h2>₹2,400</h2></div>
+<button class="add-cart-btn">
+    <i class="fa-solid fa-cart-plus"></i>
+    Add to Cart
+</button>
+</div>
+
+</div>
+</div>
+</section>
+
+<section class="brands-section" id="brands">
+<div class="brands-heading">
+<span class="section-tag">Trusted Brands</span>
+<h2>Shop by Brand</h2>
+<p>Explore products from the world's most loved brands.</p>
+</div>
+<div class="brand-slider">
+<div class="brand-track">
+<div class="brand-item"><div class="brand-circle"><img src="images/apple.png" alt="Apple"></div><span>Apple</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/samsung.png" alt="Samsung"></div><span>Samsung</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/sony.png" alt="Sony"></div><span>Sony</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/boat.png" alt="Boat"></div><span>Boat</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/dell.png" alt="Dell"></div><span>Dell</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/hp.png" alt="HP"></div><span>HP</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/nike.png" alt="Nike"></div><span>Nike</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/adidas.png" alt="Adidas"></div><span>Adidas</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/puma.png" alt="Puma"></div><span>Puma</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/jbl.png" alt="JBL"></div><span>JBL</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/logitech.png" alt="Logitech"></div><span>Logitech</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/cetaphil.jpg" alt="Cetaphil"></div><span>Cetaphil</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/apple.png" alt="Apple"></div><span>Apple</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/samsung.png" alt="Samsung"></div><span>Samsung</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/sony.png" alt="Sony"></div><span>Sony</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/boat.png" alt="Boat"></div><span>Boat</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/dell.png" alt="Dell"></div><span>Dell</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/hp.png" alt="HP"></div><span>HP</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/nike.png" alt="Nike"></div><span>Nike</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/adidas.png" alt="Adidas"></div><span>Adidas</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/puma.png" alt="Puma"></div><span>Puma</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/jbl.png" alt="JBL"></div><span>JBL</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/logitech.png" alt="Logitech"></div><span>Logitech</span></div>
+<div class="brand-item"><div class="brand-circle"><img src="images/cetaphil.jpg" alt="Cetaphil"></div><span>Cetaphil</span></div>
+</div></div></section>
+<!-- END OF PART 1 -->
+
+<!-- =====================================================
+                COMPARE BY CATEGORY
+===================================================== -->
+<section class="categories" id="categories">
+
+    <div class="section-heading">
+        <h2>Compare by Category</h2>
+        <a href="#">View All →</a>
+    </div>
+
+    <div class="category-grid">
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/electronics.png" alt="Electronics">
+            </div>
+            <h4>Electronics</h4>
+            <span>250+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/laptop.png" alt="Laptops">
+            </div>
+            <h4>Laptops</h4>
+            <span>120+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/fashion.png" alt="Fashion">
+            </div>
+            <h4>Fashion</h4>
+            <span>500+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/beauty.png" alt="Beauty">
+            </div>
+            <h4>Beauty</h4>
+            <span>300+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/home.png" alt="Home">
+            </div>
+            <h4>Home</h4>
+            <span>180+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/grocery.png" alt="Grocery">
+            </div>
+            <h4>Grocery</h4>
+            <span>90+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/watch.png" alt="Wearables">
+            </div>
+            <h4>Wearables</h4>
+            <span>140+ Products</span>
+        </div>
+
+        <div class="category-card">
+            <div class="category-image">
+                <img src="images/gaming.png" alt="Gaming">
+            </div>
+            <h4>Gaming</h4>
+            <span>80+ Products</span>
+        </div>
+
+    </div>
+</section>
+
+<!-- =====================================================
+            TRUSTED MARKETPLACES
+===================================================== -->
+
+<section class="marketplaces" id="marketplaces">
+
+    <div class="section-inner">
+
+        <div class="section-heading">
+            <h2>Trusted Across India's Top Marketplaces</h2>
+        </div>
+
+        <div class="marketplace-grid">
+
+            <div class="market-card">
+                <img src="images/amazon-color-svgrepo-com.svg" alt="Amazon">
+                <span>Amazon</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/flipkart-logo-svgrepo-com.svg" alt="Flipkart">
+                <span>Flipkart</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/myntra.png" alt="Myntra">
+                <span>Myntra</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/ajio.png" alt="AJIO">
+                <span>AJIO</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/nykaa.png" alt="Nykaa">
+                <span>Nykaa</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/meesho.png" alt="Meesho">
+                <span>Meesho</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/reliance.png" alt="Reliance Digital">
+                <span>Reliance Digital</span>
+            </div>
+
+            <div class="market-card">
+                <img src="images/chroma_logo_positivo_nome_cores_opaco_azul.png" alt="Croma">
+                <span>Croma</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =====================================================
+                TRENDING PRODUCTS
+===================================================== -->
+
+<section class="trending-section">
+
+    <div class="section-inner">
+
+        <div class="section-heading">
+            <h2>Trending Products</h2>
+            <a href="#">View All →</a>
+        </div>
+
+        <div class="trending-container">
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/iphone16_PNG38.png" alt="iPhone 16 Pro">
+                <div class="product-info">
+                    <h3>iPhone 16 Pro</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹2,400</span>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/macbook.png" alt="MacBook Air M4">
+                <div class="product-info">
+                    <h3>MacBook Air M4</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹5,000</span>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/ps5.png" alt="PlayStation 5">
+                <div class="product-info">
+                    <h3>PlayStation 5</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹3,200</span>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/watch.png" alt="Apple Watch">
+                <div class="product-info">
+                    <h3>Apple Watch</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹1,800</span>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/nothing.png" alt="Nothing Phone">
+                <div class="product-info">
+                    <h3>Nothing Phone</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹2,000</span>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <button class="wishlist-icon">
+                 <i class="fa-regular fa-heart"></i></button>
+                <img src="images/boat.png" alt="Boat Airdopes">
+                <div class="product-info">
+                    <h3>Boat Airdopes</h3>
+                    <p>Compare prices across multiple stores.</p>
+                    <span class="save-badge">Save ₹900</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- END OF PART 2 -->
+ <!-- ==========================
+     WISHLIST
+=========================== -->
+
+<!-- Wishlist Overlay -->
+<div id="wishlistOverlay" class="wishlist-overlay"></div>
+
+<!-- Wishlist Sidebar -->
+<div id="wishlistSidebar" class="wishlist-sidebar">
+
+    <div class="wishlist-header">
+        <h2>
+            <i class="fa-solid fa-heart"></i> My Wishlist
+        </h2>
+
+        <button id="closeWishlist" class="close-wishlist">
+            &times;
+        </button>
+    </div>
+
+    <div id="wishlistItems" class="wishlist-items">
+
+        <div class="empty-wishlist">
+            <i class="fa-regular fa-heart"></i>
+
+            <h3>No items yet</h3>
+
+            <p>Add products you love ❤️</p>
+        </div>
+
+    </div>
+
+</div>
+<!-- Cart Overlay -->
+<div id="cartOverlay" class="cart-overlay"></div>
+
+<!-- Cart Sidebar -->
+<div id="cartSidebar" class="cart-sidebar">
+
+    <div class="wishlist-header">
+        <h2>
+            🛒 My Cart
+        </h2>
+
+        <button id="closeCart" class="close-wishlist">
+            &times;
+        </button>
+    </div>
+
+    <div class="cart-items">
+
+        <div class="empty-wishlist">
+
+            <i class="fa-solid fa-cart-shopping"></i>
+
+            <h3>Your cart is empty</h3>
+
+            <p>Add products to your cart 🛍️</p>
+
+        </div>
+
+    </div>
+
+    <div class="cart-footer">
+
+        <button class="clear-cart-btn">
+            Clear Cart
+        </button>
+
+        <button class="checkout-btn">
+            Checkout
+        </button>
+
+    </div>
+
+</div>
+<!-- ================= LOGIN MODAL ================= -->
+
+<div id="loginOverlay" class="login-overlay"></div>
+
+<div id="loginModal" class="login-modal">
+
+    <button id="closeLogin" class="close-login">
+        &times;
+    </button>
+
+    <div class="login-top">
+
+        <h2>Welcome Back 👋</h2>
+
+        <p>Continue your smart shopping journey.</p>
+
+    </div>
+
+    <div class="login-body">
+
+        <!-- Google -->
+
+        <button class="google-login">
+
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg">
+
+            Continue with Google
+
+        </button>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <!-- Email -->
+
+        <div class="input-group">
+
+            <i class="fa-solid fa-envelope"></i>
+
+            <input
+                type="text"
+                placeholder="Email or Phone Number"
+            >
+
+        </div>
+
+        <!-- Password -->
+
+        <div class="input-group">
+
+            <i class="fa-solid fa-lock"></i>
+
+            <input
+                id="passwordInput"
+                type="password"
+                placeholder="Password"
+            >
+
+            <i
+                id="togglePassword"
+                class="fa-solid fa-eye eye-icon"
+            ></i>
+
+        </div>
+
+        <a href="#" class="forgot-password">
+
+            Forgot Password?
+
+        </a>
+
+        <button class="login-submit">
+
+            Login
+
+        </button>
+
+        <p class="create-account">
+
+            Don't have an account?
+
+            <span>Create Account</span>
+
+        </p>
+
+    </div>
+
+</div>
+
+<!-- ================= END LOGIN ================= -->
+<!-- Radial Menu -->
+<div id="radialOverlay" class="radial-overlay"></div>
+<div id="radialMenu" class="radial-menu">
+<button id="closeRadial" class="close-radial"><i class="fa-solid fa-xmark"></i></button>
+<svg class="curve-svg" viewBox="0 0 700 1000"><path id="curvePath" d="M640 0 C120 150,120 850,640 1000" fill="none"/></svg>
+<div class="radial-items">
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-user"></i></div><span>My Account</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-heart"></i></div><span>Wishlist</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-cart-shopping"></i></div><span>Cart</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-fire"></i></div><span>Today's Deals</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-chart-line"></i></div><span>Price History</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-tags"></i></div><span>Categories</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-store"></i></div><span>Brands</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-headset"></i></div><span>Support</span></button>
+<button class="radial-item"><div class="icon"><i class="fa-solid fa-gear"></i></div><span>Settings</span></button>
+</div><div id="dragHandle" class="drag-handle"></div></div>
+<script src="script.js"></script>
+
+</body>
+</html>
