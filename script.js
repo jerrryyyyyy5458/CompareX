@@ -647,3 +647,285 @@ radialMenu.addEventListener("wheel",(e)=>{
     updateRadialMenu();
 
 });
+
+/* ==========================================================
+                SEARCH SUGGESTIONS
+========================================================== */
+
+const demoProducts = [
+
+{
+name:"iPhone 16 Pro",
+brand:"Apple",
+category:"Smartphone",
+image:"imagess/iPhone.png"
+},
+
+{
+name:"iPhone 16",
+brand:"Apple",
+category:"Smartphone",
+image:"imagess/iPhone.png"
+},
+
+{
+name:"iPhone 15",
+brand:"Apple",
+category:"Smartphone",
+image:"imagess/iPhone.png"
+},
+
+{
+name:"MacBook Air M4",
+brand:"Apple",
+category:"Laptop",
+image:"imagess/macbook.png"
+},
+
+{
+name:"MacBook Pro M4",
+brand:"Apple",
+category:"Laptop",
+image:"imagess/macbook.png"
+},
+
+{
+name:"Apple Watch Series 10",
+brand:"Apple",
+category:"Smart Watch",
+image:"imagess/applewatch.png"
+},
+
+{
+name:"AirPods Pro 2",
+brand:"Apple",
+category:"Earbuds",
+image:"imagess/airpods.png"
+},
+
+{
+name:"Samsung Galaxy S25 Ultra",
+brand:"Samsung",
+category:"Smartphone",
+image:"imagess/s25.png"
+},
+
+{
+name:"Samsung Galaxy Buds 3",
+brand:"Samsung",
+category:"Earbuds",
+image:"imagess/buds.png"
+},
+
+{
+name:"Nothing Phone 3",
+brand:"Nothing",
+category:"Smartphone",
+image:"imagess/nothing.png"
+},
+
+{
+name:"Nothing Ear",
+brand:"Nothing",
+category:"Earbuds",
+image:"imagess/nothingear.png"
+},
+
+{
+name:"Sony WH-1000XM6",
+brand:"Sony",
+category:"Headphones",
+image:"imagess/sony.png"
+},
+
+{
+name:"PlayStation 5",
+brand:"Sony",
+category:"Gaming",
+image:"imagess/ps5.png"
+},
+
+{
+name:"ASUS ROG Strix",
+brand:"ASUS",
+category:"Laptop",
+image:"imagess/asus.png"
+},
+
+{
+name:"HP Victus",
+brand:"HP",
+category:"Laptop",
+image:"imagess/hp.png"
+},
+
+{
+name:"Dell XPS 15",
+brand:"Dell",
+category:"Laptop",
+image:"imagess/dell.png"
+},
+
+{
+name:"Boat Airdopes 181",
+brand:"Boat",
+category:"Earbuds",
+image:"imagess/boat.png"
+},
+
+{
+name:"JBL Flip 7",
+brand:"JBL",
+category:"Speaker",
+image:"imagess/jbl.png"
+},
+
+{
+name:"Canon EOS R50",
+brand:"Canon",
+category:"Camera",
+image:"imagess/canon.png"
+},
+
+{
+name:"Nikon Z50",
+brand:"Nikon",
+category:"Camera",
+image:"imagess/nikon.png"
+}
+
+];
+
+const suggestionBox = document.getElementById("searchSuggestions");
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input",function(){
+
+const value=this.value.trim().toLowerCase();
+
+suggestionBox.innerHTML="";
+
+if(value===""){
+
+suggestionBox.classList.remove("active");
+
+return;
+
+}
+
+const results=demoProducts.filter(product=>
+
+product.name.toLowerCase().includes(value)
+
+);
+
+if(results.length===0){
+
+suggestionBox.innerHTML=
+
+`
+<div class="suggestion">
+
+<div class="suggestion-info">
+
+<div class="suggestion-name">
+
+No Products Found
+
+</div>
+
+<div class="suggestion-brand">
+
+Try another keyword
+
+</div>
+
+</div>
+
+</div>
+`;
+
+suggestionBox.classList.add("active");
+
+return;
+
+}
+
+results.slice(0,6).forEach(product=>{
+
+suggestionBox.innerHTML+=
+
+`
+<div class="suggestion">
+
+<img src="${product.image}">
+
+<div class="suggestion-info">
+
+<div class="suggestion-name">
+
+${product.name}
+
+</div>
+
+<div class="suggestion-brand">
+
+${product.brand} • ${product.category}
+
+</div>
+
+</div>
+
+</div>
+`;
+
+});
+
+suggestionBox.innerHTML+=
+
+`
+<div class="suggestion search-all">
+
+<div class="suggestion-info">
+
+<div class="suggestion-name">
+
+🔍 Search for "${value}"
+
+</div>
+
+</div>
+
+</div>
+`;
+
+suggestionBox.classList.add("active");
+
+});
+
+document.addEventListener("click",(e)=>{
+
+if(!e.target.closest(".search-wrapper")){
+
+suggestionBox.classList.remove("active");
+
+}
+
+});
+
+suggestionBox.addEventListener("click",(e)=>{
+
+const card=e.target.closest(".suggestion");
+
+if(!card) return;
+
+const title=card.querySelector(".suggestion-name");
+
+if(!title) return;
+
+searchInput.value=title.innerText.replace("🔍 Search for ","").replace(/"/g,"");
+
+suggestionBox.classList.remove("active");
+
+});
+

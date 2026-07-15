@@ -2104,3 +2104,134 @@ padding:35px;
 }
 
 }
+
+/*======================================================
+                SEARCH SUGGESTIONS
+======================================================*/
+
+.search-wrapper{
+
+    position:relative;
+
+    width:100%;
+
+}
+
+.search-suggestions{
+
+    position:absolute;
+
+    top:110%;
+
+    left:0;
+
+    width:100%;
+
+    background:white;
+
+    border-radius:18px;
+
+    box-shadow:
+    0 20px 60px rgba(0,0,0,.12);
+
+    overflow:hidden;
+
+    display:none;
+
+    z-index:999;
+
+}
+
+.search-suggestions.active{
+
+    display:block;
+
+    animation:dropdown .25s ease;
+
+}
+
+@keyframes dropdown{
+
+from{
+
+opacity:0;
+
+transform:translateY(-10px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+.suggestion{
+
+display:flex;
+
+align-items:center;
+
+gap:14px;
+
+padding:14px 18px;
+
+cursor:pointer;
+
+transition:.25s;
+
+border-bottom:1px solid #eee;
+
+}
+
+.suggestion:last-child{
+
+border:none;
+
+}
+
+.suggestion:hover{
+
+background:#f6faf6;
+
+}
+
+.suggestion img{
+
+width:46px;
+
+height:46px;
+
+object-fit:contain;
+
+}
+
+.suggestion-info{
+
+display:flex;
+
+flex-direction:column;
+
+}
+
+.suggestion-name{
+
+font-weight:700;
+
+font-size:16px;
+
+color:#222;
+
+}
+
+.suggestion-brand{
+
+font-size:13px;
+
+color:#888;
+
+}

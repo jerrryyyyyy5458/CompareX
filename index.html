@@ -70,8 +70,31 @@
 <button class="mode-btn" id="urlMode">🔗 Product URL</button>
 </div>
 <div class="search-box">
-<input id="searchInput" type="text" placeholder="Search iPhone 16, PS5, MacBook Air...">
-<button id="compareBtn">Compare →</button>
+<button id="compareBtn">Compare →</button><div class="search-box">
+
+    <div class="search-wrapper">
+
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search iPhone 16, PS5, MacBook Air..."
+            autocomplete="off">
+
+        <!-- SEARCH SUGGESTIONS -->
+
+        <div id="searchSuggestions" class="search-suggestions">
+
+        </div>
+
+    </div>
+
+    <button id="compareBtn">
+
+        Compare →
+
+    </button>
+
+</div>
 </div>
 <div class="trending-chips">
 <span>🔥 Trending</span>
