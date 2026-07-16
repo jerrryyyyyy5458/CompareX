@@ -929,3 +929,67 @@ suggestionBox.classList.remove("active");
 
 });
 
+const openBrands = document.getElementById("openBrands");
+const allBrands = document.getElementById("allBrands");
+
+openBrands.addEventListener("click", function(e){
+
+    e.preventDefault();
+
+    allBrands.classList.toggle("show");
+
+    if(allBrands.classList.contains("show")){
+        openBrands.innerHTML = "Hide Brands ↑";
+    }else{
+        openBrands.innerHTML = "View All →";
+    }
+
+});
+
+const modal=document.getElementById("brandsModal");
+
+const open=document.getElementById("openBrands");
+
+const close=document.querySelector(".close-brands");
+
+open.onclick=function(e){
+
+e.preventDefault();
+
+modal.style.display="flex";
+
+}
+
+close.onclick=function(){
+
+modal.style.display="none";
+
+}
+
+window.onclick=function(e){
+
+if(e.target==modal){
+
+modal.style.display="none";
+
+}
+
+}
+
+const search=document.getElementById("brandSearch");
+
+search.addEventListener("keyup",function(){
+
+const filter=this.value.toLowerCase();
+
+const brands=document.querySelectorAll(".popup-brand");
+
+brands.forEach(function(item){
+
+const text=item.innerText.toLowerCase();
+
+item.style.display=text.includes(filter)?"flex":"none";
+
+});
+
+});
