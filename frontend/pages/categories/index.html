@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Category directory */
+    .categories-page { padding: 138px 0 80px; }.categories-page h1 { max-width: 700px; margin: 10px 0 40px; font-size: clamp(38px, 6vw, 70px); line-height: .98; letter-spacing: -.075em; }.categories-page h1 em { color: var(--accent); font-style: normal; }.category-directory { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }.directory-card { position: relative; min-height: 195px; padding: 22px; overflow: hidden; background: var(--card); border: 1px solid var(--border); border-radius: 20px; transition: transform .25s var(--ease-out), border .25s; }.directory-card:hover { border-color: var(--accent); transform: translateY(-5px); }.directory-icon { display: grid; width: 49px; height: 49px; margin-bottom: 45px; place-items: center; color: var(--accent); background: var(--accent-soft); border-radius: 14px; font-size: 25px; }.directory-card strong { display: block; font-size: 17px; letter-spacing: -.04em; }.directory-card span:last-child { color: var(--muted); font-size: 11px; }.directory-arrow { position: absolute; right: 20px; bottom: 18px; color: var(--accent); font-size: 21px; }@media(max-width:767px){.categories-page{padding-top:105px}.category-directory{grid-template-columns:repeat(2,1fr);gap:10px}.directory-card{min-height:160px;padding:17px}.directory-icon{margin-bottom:29px}.desktop-nav{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Categories navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a class="active" href="./">Categories</a><a href="../stores/">Stores</a><a href="../brands/">Brands</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap categories-page">
+    <!-- Category directory -->
+    <p class="eyebrow">Everything, considered</p><h1>What are you looking <em>for?</em></h1>
+    <div class="category-directory">
+      <a class="directory-card" href="../search/?query=electronics"><span class="directory-icon">◫</span><strong>Electronics</strong><span>Phones, laptops & audio</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=fashion"><span class="directory-icon">♧</span><strong>Fashion</strong><span>Style for every day</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=gaming"><span class="directory-icon">♜</span><strong>Gaming</strong><span>Consoles & accessories</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=beauty"><span class="directory-icon">✦</span><strong>Beauty</strong><span>Skincare & wellness</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=running+shoes"><span class="directory-icon">⌁</span><strong>Shoes</strong><span>Step into a deal</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=books"><span class="directory-icon">▤</span><strong>Books</strong><span>Your next page-turner</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=furniture"><span class="directory-icon">▰</span><strong>Furniture</strong><span>Make space yours</span><i class="directory-arrow">→</i></a>
+      <a class="directory-card" href="../search/?query=sports"><span class="directory-icon">◉</span><strong>Sports</strong><span>Gear up and go</span><i class="directory-arrow">→</i></a>
+    </div>
+  </main>
+  <script type="module">import { initializeTheme } from "../../js/theme.js"; initializeTheme();</script>
+</body>
+</html>

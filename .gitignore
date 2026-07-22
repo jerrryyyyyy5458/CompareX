@@ -1,0 +1,15 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.db
+.env
+
+# Tooling and editor state
+node_modules/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.DS_Store

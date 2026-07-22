@@ -1,0 +1,34 @@
+/* Design tokens shared across CompareX */
+:root {
+  --bg: #0d0d0d;
+  --surface: #171717;
+  --card: #1f1f1f;
+  --card-hover: #252525;
+  --border: #2a2a2a;
+  --muted: #929292;
+  --subtle: #666;
+  --text: #fff;
+  --accent: #ff7a1a;
+  --accent-strong: #ff6510;
+  --accent-soft: rgba(255, 122, 26, .14);
+  --success: #77d592;
+  --shadow: 0 24px 80px rgba(0, 0, 0, .36);
+  --radius-sm: 12px;
+  --radius: 20px;
+  --radius-lg: 32px;
+  --max-width: 1240px;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+
+[data-theme="light"] {
+  --bg: #f8f9fb;
+  --surface: #fff;
+  --card: #fff;
+  --card-hover: #fff;
+  --border: #e7e8eb;
+  --muted: #646a76;
+  --subtle: #9499a3;
+  --text: #111827;
+  --accent-soft: rgba(255, 122, 26, .1);
+  --shadow: 0 24px 80px rgba(25, 30, 40, .1);
+}

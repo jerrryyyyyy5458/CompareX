@@ -1,0 +1,8 @@
+Flask>=3.0
+Flask-Cors>=4.0
+Flask-JWT-Extended>=4.6
+Flask-SQLAlchemy>=3.1
+beautifulsoup4>=4.12
+requests>=2.31
+python-dotenv>=1.0
+psycopg[binary]>=3.1
