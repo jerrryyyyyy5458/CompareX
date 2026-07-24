@@ -3,8 +3,8 @@ import queue
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from services.comparison_engine import build_comparisons, is_accessory
-from services.normalizer import finalize_products
+from services.comparison_engine import STOPWORDS, build_comparisons, is_accessory
+from services.normalizer import finalize_products, normalize_title
 from services.scrapers.ajio import search_ajio
 from services.scrapers.amazon import search_amazon
 from services.scrapers.croma import search_croma
@@ -56,12 +56,22 @@ def _status(slug, state="searching", product_count=0, message=None):
 
 
 def _relevant_products(products, query):
-    """Drop accessory upsells unless the shopper searched for an accessory."""
-    return [
-        product
-        for product in products
-        if not is_accessory(product.get("title") or "", query)
-    ]
+    """Drop accessories and clearly unrelated results for specific searches."""
+    query_tokens = {
+        token for token in normalize_title(query).split()
+        if token not in STOPWORDS and len(token) > 1
+    }
+    required_overlap = 0 if len(query_tokens) < 2 else max(1, len(query_tokens) // 2)
+    relevant = []
+    for product in products:
+        title = product.get("title") or ""
+        if is_accessory(title, query):
+            continue
+        title_tokens = set(normalize_title(title).split())
+        if required_overlap and len(query_tokens & title_tokens) < required_overlap:
+            continue
+        relevant.append(product)
+    return relevant
 
 
 def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
@@ -78,7 +88,10 @@ def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
         for future in as_completed(futures):
             slug = futures[future]
             try:
-                store_products = _relevant_products(future.result(), query)
+                store_products = [
+                    {**product, "store_slug": slug}
+                    for product in _relevant_products(future.result(), query)
+                ]
                 results.extend(store_products)
                 statuses[slug] = _status(slug, "completed", len(store_products))
                 emit({

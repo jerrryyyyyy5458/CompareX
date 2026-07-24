@@ -13,13 +13,7 @@ ACCESSORY_TERMS = (
     "case",
     "charger",
     "cover",
-    "earbud",
-    "earbuds",
-    "earphone",
-    "earphones",
     "guard",
-    "headphones",
-    "headset",
     "holder",
     "mobile skin",
     "phone skin",
@@ -92,6 +86,8 @@ def is_accessory(title: str, query: str = "") -> bool:
 
 def _extract_brand(normalized: str) -> str | None:
     for brand in sorted(BRANDS, key=len, reverse=True):
+        if brand == "noise" and _word_boundary_match("noise cancelling", normalized):
+            continue
         if _word_boundary_match(brand, normalized):
             return brand
     for alias, brand in sorted(BRAND_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
@@ -163,12 +159,15 @@ def _extract_storage_and_ram(normalized: str) -> tuple[str | None, str | None]:
 
 def _extract_model(normalized: str, brand: str | None) -> str | None:
     patterns = [
+        r"\bwh\s*\d{3,4}\s*xm\d+\b",
+        r"\bwf\s*\d{3,4}\s*xm\d+\b",
+        r"\b[a-z]{1,3}\s*\d{3,5}[a-z]{0,3}\b",
         r"\biphone\s*(air|\d{1,2}\s*(?:pro\s*max|pro|plus|e|mini)?)\b",
         r"\bgalaxy\s*[a-z]?\s*\d{1,3}\s*(?:ultra|plus|fe|edge)?\b",
         r"\bpixel\s*\d{1,2}\s*(?:pro\s*xl|pro|a)?\b",
         r"\bnord\s*(?:ce\s*)?\d*\s*(?:lite)?\b",
         r"\bredmi\s*(?:note\s*)?\d+\s*(?:pro\s*plus|pro|plus|5g)?\b",
-        r"\brealme\s*(?:narzo\s*)?\d+\s*(?:pro|plus|5g)?\b",
+        r"\brealme\s*(?:narzo\s*)?\d+\s*(?:pro\s*plus|pro|plus|5g)?\b",
         r"\boneplus\s*\d+\s*(?:r|t|pro)?\b",
         r"\biqoo\s*(?:neo\s*)?\d+\s*(?:pro|5g)?\b",
         r"\bnothing\s*phone\s*\(?\s*\d+\s*a?\s*\)?\b",
@@ -256,8 +255,6 @@ def _attributes_compatible(left: dict, right: dict) -> bool:
         a, b = left.get(field), right.get(field)
         if a and b and a != b:
             return False
-    if not _colors_compatible(left.get("color"), right.get("color")):
-        return False
     left_model, right_model = left.get("model"), right.get("model")
     if left_model and right_model:
         return _models_equivalent(left_model, right_model)
@@ -293,7 +290,6 @@ def match_key(attributes: dict) -> str | None:
         model,
         attributes.get("storage") or "",
         attributes.get("ram") or "",
-        attributes.get("color") or "",
     ])
 
 
@@ -353,6 +349,7 @@ def _best_display_name(products: list[dict], attrs: dict) -> str:
 def _offer_from_product(product: dict) -> dict:
     return {
         "marketplace": product.get("store") or product.get("marketplace"),
+        "store_slug": product.get("store_slug"),
         "price": product["current_price"],
         "url": product.get("url"),
         "rating": product.get("rating"),
@@ -372,10 +369,10 @@ def _build_comparison(products: list[dict]) -> dict:
         "model": next((item["model"] for item in attrs_list if item.get("model")), None),
         "storage": next((item["storage"] for item in attrs_list if item.get("storage")), None),
         "ram": next((item["ram"] for item in attrs_list if item.get("ram")), None),
-        "color": max(
-            (item["color"] for item in attrs_list if item.get("color")),
-            key=len,
-            default=None,
+        "color": (
+            next(iter(colors))
+            if len(colors := {item["color"] for item in attrs_list if item.get("color")}) == 1
+            else None
         ),
     }
     offers = sorted((_offer_from_product(product) for product in products), key=lambda offer: offer["price"])
@@ -435,16 +432,29 @@ def build_comparisons(products: list[dict], query: str = "") -> list[dict]:
             "_match_key": match_key(attrs),
         })
 
-    groups: list[list[dict]] = []
-    for product in prepared:
-        placed = False
-        for group in groups:
-            if _same_product(product, group[0]):
-                group.append(product)
-                placed = True
-                break
-        if not placed:
-            groups.append([product])
+    # Pairwise connected components avoid order-dependent first-item grouping.
+    parents = list(range(len(prepared)))
+
+    def find(index):
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    def union(left, right):
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parents[right_root] = left_root
+
+    for left in range(len(prepared)):
+        for right in range(left + 1, len(prepared)):
+            if _same_product(prepared[left], prepared[right]):
+                union(left, right)
+
+    grouped = {}
+    for index, product in enumerate(prepared):
+        grouped.setdefault(find(index), []).append(product)
+    groups = list(grouped.values())
 
     comparisons = [_build_comparison(group) for group in groups if group]
     comparisons.sort(key=lambda item: item["lowest_price"])

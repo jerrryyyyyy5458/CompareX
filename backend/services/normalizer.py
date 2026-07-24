@@ -32,7 +32,9 @@ def parse_number(value, maximum=None):
 
 
 def normalize_title(title):
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", title.lower())).strip()
+    # Keep variant meaning: "Pro+" and "Plus" must not collapse into "Pro".
+    text = str(title).lower().replace("+", " plus ")
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", text)).strip()
 
 
 def normalized_product(raw, store):
