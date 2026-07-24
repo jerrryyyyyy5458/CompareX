@@ -84,6 +84,13 @@ def _text(item, selectors):
 
 
 def _field_value(item, field):
+    """Resolve a field from a CSS selector, attribute map, or prioritized list."""
+    if isinstance(field, (list, tuple)):
+        for candidate in field:
+            value = _field_value(item, candidate)
+            if value:
+                return value
+        return None
     if isinstance(field, dict):
         element = _select_one(item, field["selectors"])
         if not element:

@@ -1,10 +1,10 @@
 """Fresh concurrent marketplace search orchestration with progress events."""
-import math
 import queue
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from services.normalizer import finalize_products, normalize_title
+from services.comparison_engine import build_comparisons, is_accessory
+from services.normalizer import finalize_products
 from services.scrapers.ajio import search_ajio
 from services.scrapers.amazon import search_amazon
 from services.scrapers.croma import search_croma
@@ -21,11 +21,6 @@ MARKETPLACES = {
     "croma": {"name": "Croma", "scraper": search_croma, "strategy": "playwright", "color": "#24a148", "description": "Electronics & appliances"},
     "vijay-sales": {"name": "Vijay Sales", "scraper": search_vijay_sales, "strategy": "graphql", "color": "#e22b2f", "description": "Consumer electronics"},
     "nykaa": {"name": "Nykaa", "scraper": search_nykaa, "strategy": "server-rendered", "color": "#ed5f7f", "description": "Beauty & wellness"},
-}
-
-ACCESSORY_TERMS = {
-    "adapter", "back cover", "cable", "case", "charger", "cover", "guard",
-    "protector", "skin", "strap", "tempered glass",
 }
 
 
@@ -61,25 +56,12 @@ def _status(slug, state="searching", product_count=0, message=None):
 
 
 def _relevant_products(products, query):
-    """Exclude marketplace ads that do not substantially match the search."""
-    normalized_query = normalize_title(query)
-    query_tokens = [token for token in normalized_query.split() if len(token) > 1]
-    if not query_tokens:
-        return products
-    required_matches = max(1, math.ceil(len(query_tokens) * 0.6))
-    relevant = []
-    for product in products:
-        title = product.get("normalized_title", "")
-        title_tokens = set(title.split())
-        if (
-            sum(token in title_tokens for token in query_tokens) >= required_matches
-            and not any(
-                term in title and term not in normalized_query
-                for term in ACCESSORY_TERMS
-            )
-        ):
-            relevant.append(product)
-    return relevant
+    """Drop accessory upsells unless the shopper searched for an accessory."""
+    return [
+        product
+        for product in products
+        if not is_accessory(product.get("title") or "", query)
+    ]
 
 
 def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
@@ -120,11 +102,13 @@ def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
                 })
 
     products, highlights = finalize_products(results)
+    comparisons = build_comparisons(products, query)
     response = {
         "query": query,
         "source": "live",
         "cached": False,
         "products": products,
+        "comparisons": comparisons,
         "marketplaces": list(statuses.values()),
         "errors": errors,
         "highlights": highlights,

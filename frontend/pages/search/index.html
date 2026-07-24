@@ -45,7 +45,19 @@
     @keyframes shimmer { to { background-position: -200% 0; } }
     .empty-state { padding: 70px 20px; color: var(--muted); text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
     .empty-state h2 { margin-bottom: 8px; color: var(--text); font-size: 23px; }
-    @media (max-width: 767px) { .search-page { padding-top: 100px; }.results-layout { display: block; }.filter-panel { display: none; }.search-form { margin-bottom: 24px; } }
+    .comparison-card.is-expanded { grid-column: 1 / -1; }
+    .comparison-card .product-title { display: block; -webkit-line-clamp: unset; min-height: 0; }
+    .comparison-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; margin-top: 12px; color: var(--muted); font-size: 10px; }
+    .comparison-table-wrap { margin-top: 16px; overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
+    .comparison-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .comparison-table th, .comparison-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .comparison-table th { color: var(--muted); background: var(--surface); font-size: 10px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; }
+    .comparison-table tr:last-child td { border-bottom: 0; }
+    .comparison-table tr.is-best-offer { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .deal-badge { display: inline-block; margin-left: 4px; padding: 2px 6px; border-radius: 999px; font-size: 8px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
+    .deal-badge.is-best, .deal-badge.is-deal { color: #fff; background: #36b37e; }
+    .deal-badge.is-high { color: #fff; background: #ff5f52; }
+    @media (max-width: 767px) { .search-page { padding-top: 100px; }.results-layout { display: block; }.filter-panel { display: none; }.search-form { margin-bottom: 24px; }.comparison-stats { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -68,6 +80,6 @@
       <section><div class="result-meta"><span data-result-count>Searching stores…</span><select data-sort aria-label="Sort products"><option value="relevance">Most relevant</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="rating">Top rated</option></select></div><div class="product-grid" data-results-grid><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
     </div>
   </main>
-  <script type="module" src="../../js/search-page.js?v=live3"></script>
+  <script type="module" src="../../js/search-page.js?v=live5"></script>
 </body>
 </html>

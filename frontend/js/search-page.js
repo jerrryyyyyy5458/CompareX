@@ -1,5 +1,5 @@
-/* Fresh live-search progress, marketplace status, filtering, and result cards. */
-import { api } from "./api.js?v=live3";
+/* Live search progress and expandable cross-marketplace comparison cards. */
+import { api } from "./api.js?v=live5";
 import { formatPrice } from "./utils.js";
 import { initializeTheme } from "./theme.js";
 
@@ -12,10 +12,11 @@ const progressLabel = document.querySelector("[data-progress-label]");
 const progressCount = document.querySelector("[data-progress-count]");
 const progressBar = document.querySelector("[data-progress-bar]");
 const statusContainer = document.querySelector("[data-marketplace-statuses]");
-let products = [];
+let comparisons = [];
 let marketplaceStatuses = new Map();
 let activeSource;
 let searchRun = 0;
+let expandedIds = new Set();
 
 const STORE_SLUGS = {
   "amazon india": "amazon",
@@ -25,12 +26,6 @@ const STORE_SLUGS = {
   croma: "croma",
   "vijay sales": "vijay-sales",
   nykaa: "nykaa",
-};
-
-const HIGHLIGHT_LABELS = {
-  lowest_price: "Lowest price",
-  best_discount: "Best discount",
-  best_rated: "Best rated",
 };
 
 function escapeHtml(value = "") {
@@ -48,40 +43,121 @@ function safeHttpUrl(value, fallback = "#") {
   }
 }
 
-function formatReviews(value) {
-  if (value == null) return "";
-  return ` · ${Number(value).toLocaleString("en-IN")} reviews`;
+function filteredOffers(comparison) {
+  const selectedStores = [...document.querySelectorAll("[data-store-filter]:checked")].map((filter) => filter.value);
+  const inStockOnly = document.querySelector("[data-in-stock-filter]")?.checked;
+  return (comparison.offers || []).filter((offer) => {
+    const slug = STORE_SLUGS[(offer.marketplace || "").toLowerCase()];
+    const selected = !selectedStores.length || selectedStores.includes(slug);
+    const available = !inStockOnly || (offer.availability || "").toLowerCase().includes("in stock");
+    return selected && available;
+  });
 }
 
-function productCard(product) {
-  const title = escapeHtml(product.title);
-  const store = escapeHtml(product.store || product.marketplace || "Marketplace");
-  const image = safeHttpUrl(product.image_url, "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=400&q=80");
-  const productUrl = safeHttpUrl(product.url);
-  const highlights = (product.highlights || []).map((item) => `<span>${HIGHLIGHT_LABELS[item]}</span>`).join("");
-  const rating = product.rating != null ? `★ ${product.rating}${formatReviews(product.review_count)}` : "Not rated";
-  return `<article class="product-card ${highlights ? "is-highlighted" : ""}">
-    ${highlights ? `<div class="result-highlights">${highlights}</div>` : ""}
-    <div class="product-image">${product.discount ? `<span class="discount-badge">${product.discount}% off</span>` : ""}<img loading="lazy" src="${image}" alt="${title}"></div>
-    <div class="product-content"><div class="product-store"><span class="store-logo">${store.charAt(0)}</span>${store}</div><a class="product-title" href="${productUrl}" target="_blank" rel="noopener noreferrer">${title}</a><div class="price-row"><strong>${formatPrice(product.current_price)}</strong>${product.original_price ? `<del>${formatPrice(product.original_price)}</del>` : ""}</div><div class="product-availability">${escapeHtml(product.availability || "Check availability")}</div><div class="product-footer"><span class="rating"><span>★</span> ${escapeHtml(rating.replace(/^★ /, ""))}</span><a class="compare-button" href="${productUrl}" target="_blank" rel="noopener noreferrer">View offer</a></div></div>
+function summarizeOffers(offers) {
+  if (!offers.length) return null;
+  const prices = offers.map((offer) => offer.price);
+  const lowest = Math.min(...prices);
+  const highest = Math.max(...prices);
+  const average = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+  const best = offers.find((offer) => offer.price === lowest);
+  return {
+    offers: [...offers].sort((a, b) => a.price - b.price),
+    lowest_price: lowest,
+    highest_price: highest,
+    average_price: Math.round(average * 100) / 100,
+    savings: offers.length > 1 ? highest - lowest : 0,
+    best_marketplace: best?.marketplace,
+    best_deal_url: best?.url,
+    offer_count: offers.length,
+  };
+}
+
+function offerRows(comparison, summary) {
+  return summary.offers.map((offer) => {
+    const isBest = offer.price === summary.lowest_price;
+    const isHighest = summary.offer_count > 1 && offer.price === summary.highest_price;
+    const badges = [
+      isBest ? `<span class="deal-badge is-best">Lowest</span>` : "",
+      isHighest ? `<span class="deal-badge is-high">Highest</span>` : "",
+      isBest ? `<span class="deal-badge is-deal">Best deal</span>` : "",
+    ].join("");
+    return `<tr class="${isBest ? "is-best-offer" : ""}">
+      <td>${escapeHtml(offer.marketplace || "Marketplace")}</td>
+      <td><strong>${formatPrice(offer.price)}</strong> ${badges}</td>
+      <td>${offer.rating != null ? `★ ${escapeHtml(String(offer.rating))}` : "—"}</td>
+      <td>${escapeHtml(offer.availability || "Check availability")}</td>
+      <td><a class="compare-button" href="${safeHttpUrl(offer.url)}" target="_blank" rel="noopener noreferrer">View</a></td>
+    </tr>`;
+  }).join("");
+}
+
+function comparisonCard(comparison) {
+  const offers = filteredOffers(comparison);
+  const summary = summarizeOffers(offers);
+  if (!summary) return "";
+
+  const title = escapeHtml(comparison.product_name);
+  const image = safeHttpUrl(comparison.image, "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=400&q=80");
+  const expanded = expandedIds.has(comparison.id);
+  const savingsLabel = summary.savings > 0 ? `Save ${formatPrice(summary.savings)}` : "Single store";
+  const meta = [
+    comparison.brand ? escapeHtml(String(comparison.brand).toUpperCase()) : null,
+    comparison.storage ? escapeHtml(String(comparison.storage).toUpperCase()) : null,
+    comparison.ram ? `${escapeHtml(String(comparison.ram).toUpperCase())} RAM` : null,
+    comparison.color ? escapeHtml(String(comparison.color)) : null,
+  ].filter(Boolean).join(" · ");
+
+  return `<article class="product-card comparison-card ${expanded ? "is-expanded" : ""} ${summary.savings > 0 ? "is-highlighted" : ""}" data-comparison-id="${escapeHtml(comparison.id)}">
+    <div class="result-highlights">
+      <span>Best · ${escapeHtml(summary.best_marketplace || "Marketplace")}</span>
+      ${summary.savings > 0 ? `<span>${savingsLabel}</span>` : ""}
+    </div>
+    <div class="product-image"><img loading="lazy" src="${image}" alt="${title}"></div>
+    <div class="product-content">
+      <div class="product-store"><span class="store-logo">×</span>${summary.offer_count} marketplace${summary.offer_count === 1 ? "" : "s"}</div>
+      <h3 class="product-title">${title}</h3>
+      ${meta ? `<div class="product-availability">${meta}</div>` : ""}
+      <div class="price-row"><strong>${formatPrice(summary.lowest_price)}</strong>${summary.offer_count > 1 ? `<del>${formatPrice(summary.highest_price)}</del>` : ""}</div>
+      <div class="comparison-stats">
+        <span>Low ${formatPrice(summary.lowest_price)}</span>
+        <span>High ${formatPrice(summary.highest_price)}</span>
+        <span>Avg ${formatPrice(summary.average_price)}</span>
+        <span>${summary.savings > 0 ? `Savings ${formatPrice(summary.savings)}` : "No spread"}</span>
+      </div>
+      <div class="product-footer">
+        <span class="rating">Best deal · ${escapeHtml(summary.best_marketplace || "Marketplace")}</span>
+        <button class="compare-button" type="button" data-toggle-comparison="${escapeHtml(comparison.id)}">${expanded ? "Hide prices" : "Compare prices"}</button>
+      </div>
+      ${expanded ? `<div class="comparison-table-wrap"><table class="comparison-table"><thead><tr><th>Marketplace</th><th>Price</th><th>Rating</th><th>Availability</th><th></th></tr></thead><tbody>${offerRows(comparison, summary)}</tbody></table></div>` : ""}
+    </div>
   </article>`;
 }
 
 function render() {
-  const selectedStores = [...document.querySelectorAll("[data-store-filter]:checked")].map((filter) => filter.value);
-  const inStockOnly = document.querySelector("[data-in-stock-filter]")?.checked;
   const sort = document.querySelector("[data-sort]").value;
-  let visibleProducts = products.filter((product) => {
-    const slug = STORE_SLUGS[(product.store || "").toLowerCase()];
-    const selected = !selectedStores.length || selectedStores.includes(slug);
-    const available = !inStockOnly || (product.availability || "").toLowerCase().includes("in stock");
-    return selected && available;
-  });
-  if (sort === "low") visibleProducts.sort((a, b) => a.current_price - b.current_price);
-  if (sort === "high") visibleProducts.sort((a, b) => b.current_price - a.current_price);
-  if (sort === "rating") visibleProducts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  count.textContent = `${visibleProducts.length} product${visibleProducts.length === 1 ? "" : "s"} found across marketplaces`;
-  grid.innerHTML = visibleProducts.length ? visibleProducts.map(productCard).join("") : `<div class="empty-state" style="grid-column:1/-1"><h2>No matching offers yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
+  let visible = comparisons
+    .map((comparison) => {
+      const offers = filteredOffers(comparison);
+      const summary = summarizeOffers(offers);
+      return summary ? { comparison, summary } : null;
+    })
+    .filter(Boolean);
+
+  if (sort === "low") visible.sort((a, b) => a.summary.lowest_price - b.summary.lowest_price);
+  if (sort === "high") visible.sort((a, b) => b.summary.lowest_price - a.summary.lowest_price);
+  if (sort === "rating") {
+    visible.sort((a, b) => {
+      const rating = (item) => Math.max(0, ...item.summary.offers.map((offer) => offer.rating || 0));
+      return rating(b) - rating(a);
+    });
+  }
+  if (sort === "relevance") visible.sort((a, b) => a.summary.lowest_price - b.summary.lowest_price);
+
+  count.textContent = `${visible.length} comparison${visible.length === 1 ? "" : "s"} across marketplaces`;
+  grid.innerHTML = visible.length
+    ? visible.map(({ comparison }) => comparisonCard(comparison)).join("")
+    : `<div class="empty-state" style="grid-column:1/-1"><h2>No matching comparisons yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
 }
 
 function renderProgress(isComplete = false) {
@@ -102,12 +178,6 @@ function renderProgress(isComplete = false) {
   }).join("");
 }
 
-function mergeProducts(nextProducts) {
-  const byId = new Map(products.map((product) => [product.id, product]));
-  nextProducts.forEach((product) => byId.set(product.id, product));
-  products = [...byId.values()].sort((a, b) => a.current_price - b.current_price);
-}
-
 async function performSearch(query) {
   activeSource?.close();
   const currentRun = ++searchRun;
@@ -125,8 +195,10 @@ async function performSearch(query) {
     return;
   }
 
-  products = [];
+  comparisons = [];
+  expandedIds.clear();
   marketplaceStatuses.clear();
+  let searchCompleted = false;
   count.textContent = "Searching live marketplaces…";
   grid.innerHTML = "<div class=\"skeleton\"></div>".repeat(4);
   progress.hidden = false;
@@ -143,14 +215,12 @@ async function performSearch(query) {
     }
     if (event.type === "marketplace") {
       marketplaceStatuses.set(event.marketplace.slug, event.marketplace);
-      if (event.products?.length) {
-        mergeProducts(event.products);
-        render();
-      }
       renderProgress();
+      count.textContent = "Matching the same products across stores…";
     }
     if (event.type === "complete") {
-      products = event.products || [];
+      searchCompleted = true;
+      comparisons = event.comparisons || [];
       marketplaceStatuses = new Map(event.marketplaces.map((item) => [item.slug, item]));
       renderProgress(true);
       render();
@@ -167,6 +237,19 @@ async function performSearch(query) {
 
   const handleError = (_error, source) => {
     if (currentRun !== searchRun || !activeSource) return;
+    if (searchCompleted || source.readyState === EventSource.CLOSED) {
+      source.close();
+      activeSource = null;
+      return;
+    }
+    if (comparisons.length) {
+      source.close();
+      activeSource = null;
+      progressLabel.textContent = "Live search interrupted · showing comparisons";
+      renderProgress(true);
+      render();
+      return;
+    }
     source.close();
     activeSource = null;
     showConnectionError();
@@ -184,9 +267,23 @@ async function performSearch(query) {
   }
 }
 
+grid?.addEventListener("click", (event) => {
+  const toggle = event.target.closest("[data-toggle-comparison]");
+  if (!toggle) return;
+  const id = toggle.getAttribute("data-toggle-comparison");
+  if (expandedIds.has(id)) expandedIds.delete(id);
+  else expandedIds.add(id);
+  render();
+});
+
 const query = new URLSearchParams(window.location.search).get("query") || "";
 input.value = query;
-form.addEventListener("submit", (event) => { event.preventDefault(); const nextQuery = input.value.trim(); history.replaceState({}, "", `?query=${encodeURIComponent(nextQuery)}`); performSearch(nextQuery); });
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const nextQuery = input.value.trim();
+  history.replaceState({}, "", `?query=${encodeURIComponent(nextQuery)}`);
+  performSearch(nextQuery);
+});
 document.querySelectorAll("[data-store-filter], [data-sort], [data-in-stock-filter]").forEach((control) => control.addEventListener("change", render));
 initializeTheme();
 performSearch(query);
