@@ -167,7 +167,7 @@ def _extract_model(normalized: str, brand: str | None) -> str | None:
         r"\bpixel\s*\d{1,2}\s*(?:pro\s*xl|pro|a)?\b",
         r"\bnord\s*(?:ce\s*)?\d*\s*(?:lite)?\b",
         r"\bredmi\s*(?:note\s*)?\d+\s*(?:pro\s*plus|pro|plus|5g)?\b",
-        r"\brealme\s*(?:narzo\s*)?\d+\s*(?:pro|plus|5g)?\b",
+        r"\brealme\s*(?:narzo\s*)?\d+\s*(?:pro\s*plus|pro|plus|5g)?\b",
         r"\boneplus\s*\d+\s*(?:r|t|pro)?\b",
         r"\biqoo\s*(?:neo\s*)?\d+\s*(?:pro|5g)?\b",
         r"\bnothing\s*phone\s*\(?\s*\d+\s*a?\s*\)?\b",

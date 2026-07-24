@@ -19,6 +19,11 @@ def product(title, price, store, slug, suffix):
 class ComparisonEngineTests(unittest.TestCase):
     def test_preserves_plus_variant(self):
         self.assertEqual(normalize_title("realme 16 Pro+ 5G"), "realme 16 pro plus 5g")
+        comparisons = build_comparisons([
+            product("realme 16 Pro 5G", 100, "Amazon India", "amazon", "pro"),
+            product("realme 16 Pro+ 5G", 110, "Flipkart", "flipkart", "pro-plus"),
+        ], "realme 16")
+        self.assertEqual(len(comparisons), 2)
 
     def test_audio_products_are_not_treated_as_accessories(self):
         self.assertFalse(is_accessory("Sony WH-1000XM5 Noise Cancelling Headphones", "sony wh-1000xm5"))
