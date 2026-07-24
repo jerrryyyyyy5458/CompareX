@@ -28,6 +28,16 @@ const STORE_SLUGS = {
   nykaa: "nykaa",
 };
 
+const STORE_DOMAINS = {
+  amazon: "amazon.in",
+  flipkart: "flipkart.com",
+  myntra: "myntra.com",
+  ajio: "ajio.com",
+  croma: "croma.com",
+  "vijay-sales": "vijaysales.com",
+  nykaa: "nykaa.com",
+};
+
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
@@ -43,12 +53,24 @@ function safeHttpUrl(value, fallback = "#") {
   }
 }
 
+function storeSlug(offer) {
+  return offer.store_slug || STORE_SLUGS[(offer.marketplace || "").toLowerCase()];
+}
+
+function marketplaceName(name, slug) {
+  const domain = STORE_DOMAINS[slug];
+  const logo = domain
+    ? `<img class="marketplace-logo" src="https://www.google.com/s2/favicons?domain=${domain}&amp;sz=64" alt="">`
+    : "";
+  return `<span class="marketplace-name">${logo}${escapeHtml(name || "Marketplace")}</span>`;
+}
+
 function filteredOffers(comparison) {
   const selectedStores = [...document.querySelectorAll("[data-store-filter]:checked")].map((filter) => filter.value);
   const inStockOnly = document.querySelector("[data-in-stock-filter]")?.checked;
   return (comparison.offers || []).filter((offer) => {
-    const slug = STORE_SLUGS[(offer.marketplace || "").toLowerCase()];
-    const selected = !selectedStores.length || selectedStores.includes(slug);
+    const slug = storeSlug(offer);
+    const selected = !selectedStores.length || !slug || selectedStores.includes(slug);
     const available = !inStockOnly || (offer.availability || "").toLowerCase().includes("in stock");
     return selected && available;
   });
@@ -75,15 +97,15 @@ function summarizeOffers(offers) {
 
 function offerRows(comparison, summary) {
   return summary.offers.map((offer) => {
-    const isBest = offer.price === summary.lowest_price;
-    const isHighest = summary.offer_count > 1 && offer.price === summary.highest_price;
+    const isBest = Math.abs(offer.price - summary.lowest_price) < 0.01;
+    const isHighest = summary.offer_count > 1 && Math.abs(offer.price - summary.highest_price) < 0.01;
     const badges = [
       isBest ? `<span class="deal-badge is-best">Lowest</span>` : "",
       isHighest ? `<span class="deal-badge is-high">Highest</span>` : "",
       isBest ? `<span class="deal-badge is-deal">Best deal</span>` : "",
     ].join("");
     return `<tr class="${isBest ? "is-best-offer" : ""}">
-      <td>${escapeHtml(offer.marketplace || "Marketplace")}</td>
+      <td>${marketplaceName(offer.marketplace, storeSlug(offer))}</td>
       <td><strong>${formatPrice(offer.price)}</strong> ${badges}</td>
       <td>${offer.rating != null ? `★ ${escapeHtml(String(offer.rating))}` : "—"}</td>
       <td>${escapeHtml(offer.availability || "Check availability")}</td>
@@ -152,7 +174,9 @@ function render() {
       return rating(b) - rating(a);
     });
   }
-  if (sort === "relevance") visible.sort((a, b) => a.summary.lowest_price - b.summary.lowest_price);
+  if (sort === "relevance") {
+    visible.sort((a, b) => b.summary.offer_count - a.summary.offer_count || a.summary.lowest_price - b.summary.lowest_price);
+  }
 
   count.textContent = `${visible.length} comparison${visible.length === 1 ? "" : "s"} across marketplaces`;
   grid.innerHTML = visible.length
@@ -174,7 +198,7 @@ function renderProgress(isComplete = false) {
   statusContainer.innerHTML = statuses.map((marketplace) => {
     const failedText = marketplace.status === "failed" ? `${marketplace.name} temporarily unavailable` : marketplace.name;
     const completedText = marketplace.status === "completed" ? `${failedText} · ${marketplace.product_count} found` : failedText;
-    return `<span class="marketplace-status is-${marketplace.status}" title="${escapeHtml(marketplace.message || "")}">${escapeHtml(completedText)}</span>`;
+    return `<span class="marketplace-status is-${marketplace.status}" title="${escapeHtml(marketplace.message || "")}">${marketplaceName(completedText, marketplace.slug)}</span>`;
   }).join("");
 }
 
