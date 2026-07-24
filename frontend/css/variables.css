@@ -13,6 +13,7 @@
   --accent-soft: rgba(255, 122, 26, .14);
   --success: #77d592;
   --shadow: 0 24px 80px rgba(0, 0, 0, .36);
+  --brand-logo-filter: none;
   --radius-sm: 12px;
   --radius: 20px;
   --radius-lg: 32px;
@@ -31,4 +32,5 @@
   --text: #111827;
   --accent-soft: rgba(255, 122, 26, .1);
   --shadow: 0 24px 80px rgba(25, 30, 40, .1);
+  --brand-logo-filter: invert(1);
 }

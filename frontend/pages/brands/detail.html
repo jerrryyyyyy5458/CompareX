@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Compare live marketplace offers from your favourite brand.">
+  <title>Brand products — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/cards.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    .brand-detail { padding: 140px 0 90px; }
+    .brand-identity { display: flex; min-height: 270px; padding: 42px; align-items: center; gap: 38px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+    .brand-identity-logo { display: grid; flex: 0 0 130px; width: 130px; height: 130px; place-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 28px; }
+    .brand-identity-logo img { width: 78px; max-height: 68px; filter: var(--brand-logo-filter); }
+    .brand-identity h1 { margin: 9px 0 12px; font-size: clamp(38px, 6vw, 68px); line-height: 1; letter-spacing: -.07em; }
+    .brand-identity p { max-width: 580px; margin-bottom: 22px; color: var(--muted); }
+    .brand-results { padding-top: 75px; }
+    .brand-results-head { display: flex; margin-bottom: 28px; align-items: end; justify-content: space-between; gap: 20px; }
+    .brand-results-head h2 { margin: 0; font-size: clamp(28px, 4vw, 44px); }
+    .brand-status { color: var(--muted); font-size: 12px; }
+    .brand-result-card .product-title { min-height: 60px; }
+    @media (max-width: 767px) {
+      .brand-detail { padding-top: 105px; }
+      .brand-identity { display: block; min-height: 0; padding: 26px; }
+      .brand-identity-logo { width: 92px; height: 92px; margin-bottom: 24px; border-radius: 21px; }
+      .brand-identity-logo img { width: 58px; max-height: 52px; }
+      .brand-results { padding-top: 55px; }
+      .brand-results-head { display: block; }
+      .brand-status { display: block; margin-top: 8px; }
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar is-scrolled">
+    <a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a>
+    <nav class="desktop-nav" aria-label="Primary navigation"><a href="../../">Discover</a><a href="../categories/">Categories</a><a href="../stores/">Stores</a><a class="active" href="./">Brands</a></nav>
+    <div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div>
+  </header>
+  <main class="section-wrap brand-detail">
+    <section class="brand-identity">
+      <span class="brand-identity-logo"><img data-brand-logo alt=""></span>
+      <div>
+        <p class="eyebrow">Brand spotlight</p>
+        <h1 data-brand-title>Brand</h1>
+        <p>Fresh offers from connected marketplaces, brought together so you can compare before you buy.</p>
+        <a class="button button-primary" data-brand-search-link href="../search/">Search this brand <span>→</span></a>
+      </div>
+    </section>
+    <section class="brand-results">
+      <div class="brand-results-head"><h2>Live products</h2><span class="brand-status" data-brand-status>Searching marketplaces…</span></div>
+      <div class="product-grid" data-brand-products></div>
+    </section>
+  </main>
+  <script type="module" src="../../js/brand-detail.js"></script>
+</body>
+</html>

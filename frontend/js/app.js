@@ -2,57 +2,42 @@
 import { api } from "./api.js";
 import { initializeTheme } from "./theme.js";
 import { initializeNavigation } from "./navbar.js";
-import { initializeSearch, initializeCategoryWheel } from "./search.js";
-import { initializeWishlist, isWishlisted, toggleWishlist } from "./wishlist.js";
-import { initializeCompare, refreshCompareDock, toggleComparison } from "./compare.js";
-import { formatPrice } from "./utils.js";
+import { initializeSearch, initializeCategoryWheel } from "./search.js?v=save8";
+import { initializeWishlist } from "./wishlist.js";
+import { initializeCompare } from "./compare.js";
+import { MARKETPLACES } from "./marketplace-data.js?v=save8";
 
-const featuredProducts = [
-  { id: "demo-1", title: "Apple AirPods Pro (2nd Generation) with MagSafe Case", store: "Flipkart", store_mark: "F", current_price: 18999, original_price: 24900, discount: 24, rating: 4.7, image_url: "https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?auto=format&fit=crop&w=400&q=80" },
-  { id: "demo-2", title: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones", store: "Amazon", store_mark: "a", current_price: 26990, original_price: 34990, discount: 23, rating: 4.8, image_url: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=400&q=80" },
-  { id: "demo-3", title: "Nike Air Max Dn Men's Shoes", store: "Myntra", store_mark: "M", current_price: 11197, original_price: 13995, discount: 20, rating: 4.5, image_url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80" },
-  { id: "demo-4", title: "Samsung Galaxy Watch7 Bluetooth 44mm", store: "Reliance Digital", store_mark: "R", current_price: 27999, original_price: 33999, discount: 18, rating: 4.6, image_url: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?auto=format&fit=crop&w=400&q=80" },
-];
-
-const fallbackStores = [
-  { name: "Amazon", mark: "a", description: "Electronics, home & more", color: "#202531" },
-  { name: "Flipkart", mark: "F", description: "India’s shopping destination", color: "#2874f0" },
-  { name: "Myntra", mark: "M", description: "Fashion & lifestyle", color: "#f44380" },
-  { name: "AJIO", mark: "A", description: "Curated fashion", color: "#202020" },
-  { name: "Nykaa", mark: "N", description: "Beauty & wellness", color: "#ed5f7f" },
-  { name: "Reliance Digital", mark: "R", description: "Tech & appliances", color: "#e31d3b" },
-];
-
-function productCard(product) {
-  const saved = isWishlisted(product.id);
-  return `<article class="product-card reveal is-visible">
-    <div class="product-image"><span class="discount-badge">${product.discount}% off</span><button class="wishlist-button ${saved ? "is-saved" : ""}" type="button" aria-label="Save ${product.title}" data-wishlist-product="${product.id}">${saved ? "♥" : "♡"}</button><img loading="lazy" src="${product.image_url}" alt="${product.title}"></div>
-    <div class="product-content"><div class="product-store"><span class="store-logo">${product.store_mark || product.store?.charAt(0)}</span>${product.store}</div><a class="product-title" href="pages/product/?id=${encodeURIComponent(product.id)}">${product.title}</a><div class="price-row"><strong>${formatPrice(product.current_price)}</strong><del>${formatPrice(product.original_price)}</del></div><div class="product-footer"><span class="rating"><span>★</span> ${product.rating} · In stock</span><button class="compare-button" type="button" data-compare-product="${product.id}">Compare</button></div></div>
-  </article>`;
-}
-
-function bindProductActions(products) {
-  document.querySelectorAll("[data-wishlist-product]").forEach((button) => button.addEventListener("click", () => {
-    const saved = toggleWishlist(button.dataset.wishlistProduct);
-    button.classList.toggle("is-saved", saved); button.textContent = saved ? "♥" : "♡";
-  }));
-  document.querySelectorAll("[data-compare-product]").forEach((button) => button.addEventListener("click", () => {
-    const product = products.find((item) => String(item.id) === button.dataset.compareProduct);
-    toggleComparison(button.dataset.compareProduct, product); refreshCompareDock();
-  }));
-}
-
-function renderProducts(products = featuredProducts) {
+function renderProducts() {
   const container = document.querySelector("[data-trending-products]");
   if (!container) return;
-  container.innerHTML = products.slice(0, 4).map(productCard).join("");
-  bindProductActions(products);
+  container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:35px;text-align:center"><strong>Every comparison is searched live.</strong><p style="margin:8px 0 0;color:var(--muted);font-size:12px">Enter a product above to fetch fresh marketplace offers.</p></div>`;
 }
 
-function renderStores(stores = fallbackStores) {
-  const container = document.querySelector("[data-store-list]");
+function marketplacePill(marketplace, duplicate = false) {
+  return `<a class="marketplace-pill" href="${marketplace.url}" target="_blank" rel="noopener noreferrer"${duplicate ? ' aria-hidden="true" tabindex="-1"' : ""} style="--market-color:${marketplace.color}"><img src="${marketplace.logo}" alt="" width="30" height="30"><span>${marketplace.name}</span></a>`;
+}
+
+function renderMarketplaceRibbon() {
+  const container = document.querySelector("[data-marketplace-ribbon]");
   if (!container) return;
-  container.innerHTML = stores.map((store) => `<a class="store-card" href="pages/stores/?store=${encodeURIComponent(store.slug || store.name)}"><span class="store-logo" style="background:${store.color || "#2874f0"}">${store.mark || store.name.charAt(0)}</span><span><strong>${store.name}</strong><small>${store.description || store.product_count + " products tracked"}</small></span><span class="store-arrow">→</span></a>`).join("");
+  const marketplaces = MARKETPLACES.slice(0, 13);
+  const group = (duplicate = false) => marketplaces.map((marketplace) => (
+    `<span class="ribbon-market"${duplicate ? ' aria-hidden="true"' : ""}><img src="${marketplace.logo}" alt="" width="24" height="24"><strong>${marketplace.name}</strong></span>`
+  )).join("");
+  container.innerHTML = `<span class="ribbon-group">${group()}</span><span class="ribbon-group" aria-hidden="true">${group(true)}</span>`;
+}
+
+function renderStores() {
+  const container = document.querySelector("[data-store-ribbons]");
+  if (!container) return;
+  const renderRow = (marketplaces, direction) => {
+    const group = (duplicate = false) => `<span class="marketplace-pill-set">${marketplaces.map((marketplace) => marketplacePill(marketplace, duplicate)).join("")}</span>`;
+    return `<div class="marketplace-row marketplace-row-${direction}"><div class="marketplace-row-track">${group()}${group(true)}</div></div>`;
+  };
+  container.innerHTML = [
+    renderRow(MARKETPLACES, "left"),
+    renderRow([...MARKETPLACES].reverse(), "right"),
+  ].join("");
 }
 
 function initializeRevealAnimations() {
@@ -86,9 +71,5 @@ function initializeForms() {
   });
 }
 
-async function hydrateFromApi() {
-  try { const stores = await api.stores(); renderStores(stores.stores || stores); } catch { renderStores(); }
-}
-
 initializeTheme(); initializeNavigation(); initializeSearch(); initializeCategoryWheel(); initializeWishlist(); initializeCompare();
-renderProducts(); renderStores(); initializeRevealAnimations(); initializeCounters(); initializeForms(); hydrateFromApi();
+renderProducts(); renderMarketplaceRibbon(); renderStores(); initializeRevealAnimations(); initializeCounters(); initializeForms();

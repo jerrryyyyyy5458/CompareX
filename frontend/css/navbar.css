@@ -12,6 +12,78 @@
 .account-trigger { height: 38px; margin-left: 8px; padding: 0 13px; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 700; transition: .2s; }
 .account-trigger:hover { border-color: var(--accent); color: var(--accent); }
 .account-trigger span { color: var(--accent); }
-.menu-button { display: none; position: relative; width: 42px; height: 38px; padding: 0; background: transparent; border: 0; }
+.menu-button { display: block; position: relative; width: 42px; height: 38px; padding: 0; background: transparent; border: 0; }
 .menu-button span { position: absolute; left: 10px; width: 22px; height: 2px; background: var(--text); transition: transform .2s; }
 .menu-button span:first-child { top: 14px; }.menu-button span:last-child { top: 22px; }
+
+.mobile-drawer {
+  position: fixed;
+  z-index: 80;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, 90vw);
+  height: 100vh;
+  height: 100dvh;
+  padding: 22px;
+  overflow: hidden;
+  visibility: hidden;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateX(-105%);
+  transition: visibility .35s, opacity .35s, transform .55s var(--ease-out);
+  backdrop-filter: blur(18px);
+}
+.mobile-drawer.is-open { visibility: visible; opacity: 1; transform: none; }
+.drawer-header { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; }
+.drawer-header .icon-button { font-size: 26px; }
+.drawer-edge { position: absolute; z-index: 4; top: 50%; right: -1px; width: 8px; height: 64px; background: var(--accent); border-radius: 9px 0 0 9px; box-shadow: 0 0 24px rgba(255,122,26,.35); transform: translateY(-50%); }
+.orbit-menu { position: relative; flex: 1; min-height: 0; margin: 20px -22px 10px 0; overflow: hidden; outline: none; }
+.orbit-menu:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 18px 0 0 18px; }
+.orbit-guide { position: absolute; top: 50%; left: 87px; width: 430px; height: 760px; border: 1px solid color-mix(in srgb, var(--muted) 25%, transparent); border-radius: 50%; transform: translateY(-50%); pointer-events: none; }
+.orbit-menu nav { position: absolute; inset: 0; }
+.orbit-menu [data-orbit-item] {
+  position: absolute;
+  top: 0;
+  left: 38px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 238px;
+  height: 52px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  transition: transform .62s var(--ease-out), opacity .42s, color .3s;
+}
+.orbit-menu [data-orbit-item].is-jumping { transition: none; }
+.orbit-menu [data-orbit-item].is-active { color: var(--text); font-weight: 750; }
+.orbit-menu [data-orbit-item]:hover { color: var(--accent); }
+.orbit-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 8px 22px rgba(0,0,0,.12);
+  font-size: 17px;
+  transition: color .3s, background .3s, border .3s, transform .3s;
+}
+.orbit-menu [data-orbit-item].is-active .orbit-icon { color: #fff; background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
+.orbit-hint { position: absolute; z-index: 2; right: 24px; bottom: 2px; margin: 0; color: var(--subtle); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
+.orbit-hint span { color: var(--accent); font-size: 12px; }
+.drawer-login { position: relative; z-index: 3; flex: 0 0 auto; }
+.drawer-scrim { position: fixed; z-index: 75; inset: 0; display: block; visibility: hidden; background: rgba(0,0,0,.58); opacity: 0; transition: visibility .35s, opacity .35s; backdrop-filter: blur(4px); }
+.drawer-scrim.is-open { visibility: visible; opacity: 1; }
