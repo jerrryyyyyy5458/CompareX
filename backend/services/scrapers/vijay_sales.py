@@ -3,7 +3,7 @@ import json
 
 from services.normalizer import normalized_product
 
-from .base import fetch_json
+from .base import fetch_html, fetch_json
 
 
 SEARCH_QUERY = """
@@ -32,6 +32,28 @@ query SearchProducts($term: String!) {
 
 
 def search_vijay_sales(query):
+    lowered = (query or "").strip().lower()
+    if lowered.startswith(("http://", "https://")) and "vijaysales.com" in lowered:
+        soup = fetch_html(query)
+        title_node = soup.select_one("h1, [itemprop='name']")
+        price_node = soup.select_one("[itemprop='price'], .price, .product-price")
+        image_node = soup.select_one("img[src], img")
+        rating_node = soup.select_one("[itemprop='ratingValue'], .rating")
+        product = normalized_product(
+            {
+                "title": title_node.get_text(" ", strip=True) if title_node else None,
+                "current_price": price_node.get("content") if price_node and price_node.get("content") else price_node.get_text(" ", strip=True) if price_node else None,
+                "rating": rating_node.get("content") if rating_node and rating_node.get("content") else rating_node.get_text(" ", strip=True) if rating_node else None,
+                "availability": "Check availability",
+                "url": query,
+                "image_url": image_node.get("src") or image_node.get("data-src") if image_node else None,
+            },
+            "Vijay Sales",
+        )
+        if product["title"] and product["current_price"] and product["url"]:
+            return [product]
+        raise RuntimeError("Vijay Sales product page loaded but exact product extraction failed.")
+
     payload = fetch_json(
         "https://vsprod.vijaysales.com/graphql",
         params={

@@ -3,6 +3,24 @@ import hashlib
 import re
 from urllib.parse import urlsplit, urlunsplit
 
+PROMO_PATTERNS = (
+    r"\boriginal\b",
+    r"\bnew\b",
+    r"\bbestseller\b",
+    r"\bbest seller\b",
+    r"\bsale\b",
+    r"\bcombo\b",
+    r"\bpack of\b",
+    r"\btrending\b",
+    r"\blimited edition\b",
+    r"\bspecial edition\b",
+    r"\btop rated\b",
+    r"\bmust have\b",
+    r"\bofficial\b",
+    r"\bexclusive\b",
+    r"\bvalue pack\b",
+)
+
 
 def parse_price(value):
     """Return a float from marketplace price text, or None when absent."""
@@ -32,7 +50,13 @@ def parse_number(value, maximum=None):
 
 
 def normalize_title(title):
-    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", title.lower())).strip()
+    normalized = re.sub(r"[^a-z0-9.+/ ]", " ", str(title).lower())
+    for pattern in PROMO_PATTERNS:
+        normalized = re.sub(pattern, " ", normalized)
+    normalized = re.sub(r"\bpk\b", " pack ", normalized)
+    normalized = re.sub(r"\bpcs\b", " pieces ", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
 
 
 def normalized_product(raw, store):
