@@ -23,12 +23,28 @@ let searchRun = 0;
 let tableSort = "low";
 let chipFilter = "all";
 let tableSearch = "";
+/** @type {"browse"|"compare"} */
+let viewMode = "browse";
+/** @type {"browse"|"compare"|null} */
+let searchMode = null;
+/** @type {string|null} */
+let selectedGroupId = null;
+/** @type {Array<object>} */
+let productGroups = [];
 /** @type {Map<string, object>} slug -> store metadata from GET /stores */
 let registeredBySlug = new Map();
 /** @type {Map<string, string>} lowercase name -> slug */
 let slugByName = new Map();
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=400&q=80";
+const GENERIC_STOP_WORDS = new Set([
+  "with", "for", "and", "the", "spf", "pa", "pack", "of", "india", "new", "ml", "gm", "g", "kg",
+  "combo", "set", "pair", "size", "free", "offer", "sale", "original", "genuine",
+]);
+
+function isProductUrlQuery(query = "") {
+  return /^https?:\/\//i.test(String(query).trim());
+}
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -153,35 +169,6 @@ function matchScore(title, query) {
   return overlap / queryTokens.length;
 }
 
-function discountValue(offer) {
-  if (offer.discount != null && offer.discount !== "") {
-    const parsed = parseAmount(offer.discount);
-    if (parsed != null) return parsed;
-  }
-  const original = parseAmount(offer.original_price);
-  if (original && offer.price && original > offer.price) {
-    return Math.round((1 - offer.price / original) * 100);
-  }
-  return 0;
-}
-
-function discountLabel(offer) {
-  const value = discountValue(offer);
-  return value > 0 ? `${value}%` : "—";
-}
-
-function deliveryLabel(offer) {
-  if (offer.delivery) return String(offer.delivery);
-  const availability = String(offer.availability || "").toLowerCase();
-  if (availability.includes("tomorrow")) return "Tomorrow";
-  if (availability.includes("today") || availability.includes("minutes")) return "Today";
-  if (/\d+\s*day/.test(availability)) {
-    const match = availability.match(/(\d+)\s*day/);
-    return match ? `${match[1]} Days` : offer.availability;
-  }
-  return "—";
-}
-
 function productToOffer(product) {
   const price = parseAmount(product.current_price ?? product.price);
   return {
@@ -259,21 +246,137 @@ function buildUnifiedComparison(sourceProducts, query) {
   };
 }
 
+function normalizeTitleTokens(title = "") {
+  return String(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9+.\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((token) => token && !GENERIC_STOP_WORDS.has(token) && !/^\d+(\.\d+)?$/.test(token));
+}
+
+function productGroupKey(product) {
+  const tokens = normalizeTitleTokens(product.title || "");
+  if (!tokens.length) return (product.id || product.url || Math.random().toString(36)).toString();
+  // Brand + distinctive product words form a stable browse key across stores.
+  return tokens.slice(0, 5).join(" ");
+}
+
+function guessBrand(title = "") {
+  const tokens = normalizeTitleTokens(title);
+  if (!tokens.length) return "Unknown";
+  return tokens[0].replace(/^\w/, (char) => char.toUpperCase());
+}
+
+function buildProductGroups(sourceProducts, query) {
+  const candidates = filteredProducts(sourceProducts);
+  const groups = new Map();
+
+  for (const product of candidates) {
+    const key = productGroupKey(product);
+    const price = parseAmount(product.current_price ?? product.price);
+    const market = marketplaceKey(product.store || product.marketplace || "");
+    const existing = groups.get(key);
+    if (!existing) {
+      groups.set(key, {
+        id: key,
+        title: product.title,
+        brand: guessBrand(product.title),
+        image: product.image_url || product.image || null,
+        lowestPrice: price,
+        rating: product.rating ?? null,
+        markets: new Set(market ? [market] : []),
+        products: [product],
+        relevance: matchScore(product.title || "", query),
+      });
+      continue;
+    }
+
+    existing.products.push(product);
+    if (market) existing.markets.add(market);
+    if (price != null && (existing.lowestPrice == null || price < existing.lowestPrice)) {
+      existing.lowestPrice = price;
+      existing.title = product.title;
+      if (product.image_url || product.image) existing.image = product.image_url || product.image;
+    }
+    if (product.rating != null && (existing.rating == null || product.rating > existing.rating)) {
+      existing.rating = product.rating;
+    }
+    existing.relevance = Math.max(existing.relevance, matchScore(product.title || "", query));
+  }
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      marketCount: group.markets.size,
+      markets: [...group.markets],
+    }))
+    .sort((a, b) => b.relevance - a.relevance || (a.lowestPrice ?? Infinity) - (b.lowestPrice ?? Infinity));
+}
+
+function shouldShowProductBrowse(mode, groups) {
+  if (isProductUrlQuery(searchQuery) || mode === "compare") return false;
+  return groups.length > 1;
+}
+
+function productResultsGrid(groups) {
+  return `<div class="cx-browse-grid" data-product-results>
+    ${groups.map((group) => {
+      const image = safeHttpUrl(group.image, FALLBACK_IMAGE);
+      const rating = group.rating != null ? `★ ${escapeHtml(String(group.rating))}` : "";
+      const markets = group.marketCount;
+      return `<button type="button" class="cx-product-result" data-product-group="${escapeHtml(group.id)}">
+        <img class="cx-product-result-image" src="${image}" alt="" loading="lazy">
+        <span class="cx-product-result-copy">
+          <span class="cx-product-result-brand">${escapeHtml(group.brand)}</span>
+          <strong class="cx-product-result-title">${escapeHtml(group.title)}</strong>
+          <span class="cx-product-result-meta">
+            <span class="cx-product-result-price">Starts from ${formatPrice(group.lowestPrice)}</span>
+            <span>Available on ${markets} marketplace${markets === 1 ? "" : "s"}</span>
+            ${rating ? `<span class="cx-product-result-rating">${rating}</span>` : ""}
+          </span>
+        </span>
+        <span class="cx-product-result-cta">Compare prices →</span>
+      </button>`;
+    }).join("")}
+  </div>`;
+}
+
+function comparisonBackBar(groupTitle) {
+  return `<div class="cx-compare-nav">
+    <button type="button" class="cx-back-to-results" data-back-to-results>← Back to products</button>
+    <span class="cx-crumb">Home <span>/</span> Search <span>/</span> <strong>${escapeHtml(groupTitle || "Product")}</strong></span>
+  </div>`;
+}
+
+function productFactPills(title = "") {
+  const text = String(title);
+  const pills = [];
+  const spf = text.match(/\bspf\s*\d+\b/i);
+  if (spf) pills.push(spf[0].toUpperCase().replace(/\s+/, " "));
+  const size = text.match(/\b\d+(?:\.\d+)?\s?(?:ml|g|gm|kg)\b/i);
+  if (size) pills.push(size[0].replace(/\s+/g, ""));
+  const skin = text.match(/\ball\s+skin\s+types\b|\boily\s+skin\b|\bdry\s+skin\b|\bsensitive\s+skin\b/i);
+  if (skin) {
+    pills.push(skin[0].replace(/\b\w/g, (char) => char.toUpperCase()));
+  }
+  return [...new Set(pills)].slice(0, 3);
+}
+
+function averageOfferRating(offers = []) {
+  const ratings = offers.map((offer) => Number(offer.rating)).filter((value) => Number.isFinite(value) && value > 0);
+  if (!ratings.length) return null;
+  return Math.round((ratings.reduce((sum, value) => sum + value, 0) / ratings.length) * 10) / 10;
+}
+
 function sortOffers(offers, sortKey) {
   const sorted = [...offers];
   switch (sortKey) {
     case "high":
       return sorted.sort((a, b) => b.price - a.price);
-    case "discount":
-      return sorted.sort((a, b) => discountValue(b) - discountValue(a) || a.price - b.price);
     case "rating":
       return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0) || a.price - b.price);
-    case "delivery":
-      return sorted.sort((a, b) => deliveryLabel(a).localeCompare(deliveryLabel(b)) || a.price - b.price);
-    case "alpha":
-      return sorted.sort((a, b) => String(a.marketplace).localeCompare(String(b.marketplace)));
-    case "relevance":
-      return sorted.sort((a, b) => (b.relevance || 0) - (a.relevance || 0) || a.price - b.price);
     case "low":
     default:
       return sorted.sort((a, b) => a.price - b.price);
@@ -285,70 +388,67 @@ function visibleOffers(comparison) {
   if (chipFilter !== "all") {
     offers = offers.filter((offer) => marketplaceKey(offer.marketplace) === chipFilter);
   }
-  if (tableSearch.trim()) {
-    const needle = tableSearch.trim().toLowerCase();
-    offers = offers.filter((offer) => {
-      const haystack = `${offer.marketplace || ""} ${offer.title || ""}`.toLowerCase();
-      return haystack.includes(needle);
-    });
-  }
   return sortOffers(offers, tableSort);
 }
 
-function summaryBar(comparison, offers) {
-  const prices = offers.map((offer) => offer.price);
+function productHero(comparison, offers, group) {
+  const image = safeHttpUrl(comparison.image || group?.image, FALLBACK_IMAGE);
+  const brand = escapeHtml(group?.brand || guessBrand(comparison.product_name || ""));
+  const title = escapeHtml(comparison.product_name || group?.title || "Product");
+  const rating = averageOfferRating(offers);
+  const pills = productFactPills(comparison.product_name || group?.title || "")
+    .map((pill) => `<span class="cx-fact-pill">${escapeHtml(pill)}</span>`)
+    .join("");
+  const description = `Compare live prices for ${title} across trusted Indian marketplaces and pick the offer that fits your budget.`;
+
+  return `<section class="cx-product-hero">
+    <div class="cx-product-media">
+      <img src="${image}" alt="${title}" loading="lazy">
+    </div>
+    <div class="cx-product-copy">
+      <p class="cx-product-brand">${brand}</p>
+      <h2 class="cx-product-title">${title}</h2>
+      ${rating != null ? `<p class="cx-product-rating"><span>★ ${escapeHtml(String(rating))}</span> <small>avg across stores</small></p>` : ""}
+      ${pills ? `<div class="cx-fact-row">${pills}</div>` : ""}
+      <p class="cx-product-desc">${description}</p>
+      <div class="cx-product-actions">
+        <button type="button" class="cx-btn cx-btn-secondary" data-share-product>Share</button>
+        <a class="cx-btn cx-btn-secondary" href="../wishlist/">Wishlist</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+function bestDealCard(comparison, offers) {
+  const prices = offers.map((offer) => offer.price).filter((price) => price != null);
   const lowest = prices.length ? Math.min(...prices) : comparison.lowest_price;
   const highest = prices.length ? Math.max(...prices) : comparison.highest_price;
   const best = offers.find((offer) => offer.price === lowest) || comparison.offers[0];
   const savings = prices.length > 1 ? highest - lowest : 0;
-
   const marketCount = comparison.offer_count || comparison.offers.length;
-  return `<div class="cx-summary-bar">
-    <div class="cx-summary-main">
-      <p class="cx-summary-eyebrow">CompareX intelligence</p>
-      <h2 class="cx-summary-title">Compared across ${marketCount} marketplace${marketCount === 1 ? "" : "s"}</h2>
-      <p class="cx-summary-product">${escapeHtml(comparison.product_name)}</p>
+  const url = safeHttpUrl(best?.url);
+
+  return `<aside class="cx-best-deal">
+    <div class="cx-best-deal-top">
+      <p class="cx-best-deal-label">🏆 Best Deal</p>
+      ${savings > 0 ? `<span class="cx-save-pill">You save ${formatPrice(savings)}</span>` : ""}
     </div>
-    <div class="cx-summary-stats">
-      <div><span>Lowest Price</span><strong>${formatPrice(lowest)}</strong></div>
-      <div><span>Highest Price</span><strong>${formatPrice(highest)}</strong></div>
-      <div><span>You Save</span><strong class="is-save">${savings > 0 ? formatPrice(savings) : "—"}</strong></div>
-      <div><span>Best Deal</span><strong class="is-best">${escapeHtml(best?.marketplace || "—")}</strong></div>
-    </div>
-  </div>`;
+    <p class="cx-best-deal-price">${formatPrice(lowest)}</p>
+    <p class="cx-best-deal-store">on <strong>${escapeHtml(best?.marketplace || "—")}</strong></p>
+    <p class="cx-best-deal-meta">Compared across ${marketCount} store${marketCount === 1 ? "" : "s"}</p>
+    <a class="cx-btn cx-btn-primary" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>View Deal →</a>
+  </aside>`;
 }
 
-function filterChips(comparison) {
-  const markets = [...new Map(
-    comparison.offers.map((offer) => [marketplaceKey(offer.marketplace), offer.marketplace]),
-  ).entries()];
-
-  return `<div class="cx-chip-row" role="toolbar" aria-label="Filter marketplaces">
-    <button type="button" class="cx-chip${chipFilter === "all" ? " is-active" : ""}" data-chip-filter="all">All</button>
-    ${markets.map(([slug, name]) => `
-      <button type="button" class="cx-chip${chipFilter === slug ? " is-active" : ""}" data-chip-filter="${escapeHtml(slug)}">
-        ${escapeHtml(name)}
-      </button>
-    `).join("")}
-  </div>`;
-}
-
-function toolbar() {
-  return `<div class="cx-toolbar">
-    <label class="cx-search-wrap">
-      <span class="cx-search-icon" aria-hidden="true">⌕</span>
-      <input type="search" class="cx-table-search" data-table-search placeholder="Search marketplaces..." value="${escapeHtml(tableSearch)}" aria-label="Search marketplaces">
-    </label>
+function comparisonToolbar() {
+  return `<div class="cx-table-head">
+    <h3>Compare prices</h3>
     <label class="cx-sort-wrap">
-      <span>Sort By</span>
+      <span>Sort by</span>
       <select data-table-sort aria-label="Sort comparison table">
         <option value="low"${tableSort === "low" ? " selected" : ""}>Lowest Price</option>
         <option value="high"${tableSort === "high" ? " selected" : ""}>Highest Price</option>
-        <option value="discount"${tableSort === "discount" ? " selected" : ""}>Highest Discount</option>
         <option value="rating"${tableSort === "rating" ? " selected" : ""}>Rating</option>
-        <option value="delivery"${tableSort === "delivery" ? " selected" : ""}>Delivery Time</option>
-        <option value="alpha"${tableSort === "alpha" ? " selected" : ""}>Alphabetical</option>
-        <option value="relevance"${tableSort === "relevance" ? " selected" : ""}>Most Relevant</option>
       </select>
     </label>
   </div>`;
@@ -356,120 +456,118 @@ function toolbar() {
 
 function tableRow(offer, isBest) {
   const meta = marketplaceMeta(offer.marketplace);
-  const title = escapeHtml(offer.title || "");
-  const image = safeHttpUrl(offer.image_url, FALLBACK_IMAGE);
   const url = safeHttpUrl(offer.url);
   const original = parseAmount(offer.original_price);
-  const discount = discountLabel(offer);
   const rating = offer.rating != null ? `★ ${escapeHtml(String(offer.rating))}` : "—";
-  const delivery = escapeHtml(deliveryLabel(offer));
-  const availability = escapeHtml(offer.availability || "Check availability");
 
-  return `<tr class="cx-row${isBest ? " is-best-deal" : ""}" data-offer-url="${url}" tabindex="0" role="link">
+  return `<tr class="cx-row${isBest ? " is-best-deal" : ""}">
     <td class="cx-col-store">
       <div class="cx-store-cell">
+        ${storeIdentityHtml(meta, 28)}
         <div>
           <strong>${escapeHtml(offer.marketplace || meta.name)}</strong>
-          ${isBest ? `<span class="cx-best-badge">🏆 Best Deal</span>` : ""}
+          ${isBest ? `<span class="cx-best-badge">Best Deal</span>` : ""}
         </div>
       </div>
     </td>
-    <td class="cx-col-logo">
-      ${storeIdentityHtml(meta, 28)}
+    <td class="cx-col-price">
+      <strong>${formatPrice(offer.price)}</strong>
+      ${original && original > offer.price ? `<small class="cx-original">${formatPrice(original)}</small>` : ""}
     </td>
-    <td class="cx-col-image">
-      <img class="cx-product-thumb" src="${image}" alt="${title}" loading="lazy">
-    </td>
-    <td class="cx-col-name">
-      <span class="cx-product-name">${title}</span>
-    </td>
-    <td class="cx-col-price"><strong>${formatPrice(offer.price)}</strong></td>
-    <td class="cx-col-original">${original && original > offer.price ? `<del>${formatPrice(original)}</del>` : "—"}</td>
-    <td class="cx-col-discount"><span class="cx-discount">${escapeHtml(discount)}</span></td>
-    <td class="cx-col-availability">${availability}</td>
     <td class="cx-col-rating">${rating}</td>
-    <td class="cx-col-delivery">${delivery}</td>
     <td class="cx-col-buy">
-      <a class="cx-buy-btn" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>Buy</a>
+      <a class="cx-btn ${isBest ? "cx-btn-primary" : "cx-btn-ghost"}" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>View Deal</a>
     </td>
   </tr>`;
 }
 
 function mobileCard(offer, isBest) {
   const meta = marketplaceMeta(offer.marketplace);
-  const title = escapeHtml(offer.title || "");
-  const image = safeHttpUrl(offer.image_url, FALLBACK_IMAGE);
   const url = safeHttpUrl(offer.url);
   const original = parseAmount(offer.original_price);
-  const discount = discountLabel(offer);
+  const rating = offer.rating != null ? `★ ${escapeHtml(String(offer.rating))}` : "—";
 
-  return `<a class="cx-mobile-card${isBest ? " is-best-deal" : ""}" href="${url}" target="_blank" rel="noopener noreferrer">
+  return `<article class="cx-mobile-card${isBest ? " is-best-deal" : ""}">
     <div class="cx-mobile-top">
       ${storeIdentityHtml(meta, 24)}
-      <strong>${escapeHtml(offer.marketplace || meta.name)}</strong>
-      ${isBest ? `<span class="cx-best-badge">🏆 Best Deal</span>` : ""}
-    </div>
-    <div class="cx-mobile-body">
-      <img class="cx-product-thumb" src="${image}" alt="${title}" loading="lazy">
       <div>
-        <p class="cx-product-name">${title}</p>
-        <div class="cx-mobile-price">
-          <strong>${formatPrice(offer.price)}</strong>
-          ${original && original > offer.price ? `<del>${formatPrice(original)}</del>` : ""}
-          <span class="cx-discount">${escapeHtml(discount)}</span>
-        </div>
-        <small>${escapeHtml(offer.availability || "Check availability")} · ${escapeHtml(deliveryLabel(offer))}</small>
+        <strong>${escapeHtml(offer.marketplace || meta.name)}</strong>
+        ${isBest ? `<span class="cx-best-badge">Best Deal</span>` : ""}
       </div>
     </div>
-    <span class="cx-buy-btn">Buy</span>
-  </a>`;
+    <div class="cx-mobile-price">
+      <strong>${formatPrice(offer.price)}</strong>
+      ${original && original > offer.price ? `<small class="cx-original">${formatPrice(original)}</small>` : ""}
+      <span class="cx-mobile-rating">${rating}</span>
+    </div>
+    <a class="cx-btn ${isBest ? "cx-btn-primary" : "cx-btn-ghost"}" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>View Deal</a>
+  </article>`;
 }
 
-function comparisonTable(comparison) {
+function comparisonTable(comparison, group = null) {
   const offers = visibleOffers(comparison);
   if (!offers.length) {
-    return `${summaryBar(comparison, comparison.offers)}
-      ${toolbar()}
-      ${filterChips(comparison)}
-      <div class="empty-state"><h2>No matching marketplaces</h2><p>Try another filter or search term.</p></div>`;
+    return `<section class="cx-comparison-page">
+      ${productHero(comparison, comparison.offers, group)}
+      <div class="empty-state"><h2>No matching marketplaces</h2><p>Try enabling more stores in the sidebar.</p></div>
+    </section>`;
   }
 
   const lowest = Math.min(...offers.map((offer) => offer.price));
 
-  return `<section class="cx-comparison-panel" data-comparison-id="${escapeHtml(comparison.id)}">
-    ${summaryBar(comparison, offers)}
-    ${toolbar()}
-    ${filterChips(comparison)}
-    <div class="cx-table-shell">
-      <table class="cx-compare-table">
-        <thead>
-          <tr>
-            <th>Store</th>
-            <th>Logo</th>
-            <th>Product Image</th>
-            <th>Product Name</th>
-            <th>Price</th>
-            <th>Original Price</th>
-            <th>Discount %</th>
-            <th>Availability</th>
-            <th>Rating</th>
-            <th>Delivery</th>
-            <th>Buy</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${offers.map((offer) => tableRow(offer, offer.price === lowest && offers.length > 1)).join("")}
-        </tbody>
-      </table>
+  return `<section class="cx-comparison-page" data-comparison-id="${escapeHtml(comparison.id)}">
+    <div class="cx-compare-top">
+      ${productHero(comparison, offers, group)}
+      ${bestDealCard(comparison, offers)}
     </div>
-    <div class="cx-mobile-list">
-      ${offers.map((offer) => mobileCard(offer, offer.price === lowest && offers.length > 1)).join("")}
+    <div class="cx-compare-table-card">
+      ${comparisonToolbar()}
+      <div class="cx-table-shell">
+        <table class="cx-compare-table">
+          <thead>
+            <tr>
+              <th>Store</th>
+              <th>Price</th>
+              <th>Rating</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${offers.map((offer) => tableRow(offer, offer.price === lowest && offers.length > 1)).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="cx-mobile-list">
+        ${offers.map((offer) => mobileCard(offer, offer.price === lowest && offers.length > 1)).join("")}
+      </div>
     </div>
   </section>`;
 }
 
 function render() {
-  const comparison = buildUnifiedComparison(products, searchQuery);
+  productGroups = buildProductGroups(products, searchQuery);
+
+  if (!productGroups.length) {
+    selectedGroupId = null;
+    viewMode = "browse";
+    count.textContent = "No marketplace matches yet";
+    grid.innerHTML = `<div class="empty-state"><h2>No matching products yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
+    return;
+  }
+
+  const browse = shouldShowProductBrowse(searchMode, productGroups);
+  if (browse && viewMode !== "compare") {
+    viewMode = "browse";
+    selectedGroupId = null;
+    count.textContent = `${productGroups.length} products · pick one to compare prices`;
+    grid.innerHTML = productResultsGrid(productGroups);
+    return;
+  }
+
+  viewMode = "compare";
+  const selectedGroup = productGroups.find((group) => group.id === selectedGroupId) || productGroups[0];
+  selectedGroupId = selectedGroup.id;
+  const comparison = buildUnifiedComparison(selectedGroup.products, selectedGroup.title || searchQuery);
   if (!comparison) {
     count.textContent = "No marketplace matches yet";
     grid.innerHTML = `<div class="empty-state"><h2>No matching comparisons yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
@@ -477,8 +575,11 @@ function render() {
   }
 
   const offers = visibleOffers(comparison);
-  count.textContent = `1 comparison · ${offers.length} marketplace${offers.length === 1 ? "" : "s"} shown`;
-  grid.innerHTML = comparisonTable(comparison);
+  count.textContent = `${offers.length} store${offers.length === 1 ? "" : "s"} compared`;
+  const backBar = browse || productGroups.length > 1
+    ? comparisonBackBar(selectedGroup.title)
+    : "";
+  grid.innerHTML = `${backBar}${comparisonTable(comparison, selectedGroup)}`;
 }
 
 function renderProgress(isComplete = false) {
@@ -521,9 +622,15 @@ async function performSearch(query) {
   chipFilter = "all";
   tableSearch = "";
   tableSort = "low";
+  selectedGroupId = null;
+  productGroups = [];
+  searchMode = isProductUrlQuery(query) ? "compare" : "browse";
+  viewMode = searchMode === "compare" ? "compare" : "browse";
   marketplaceStatuses.clear();
   let searchCompleted = false;
-  count.textContent = "Searching live marketplaces…";
+  count.textContent = searchMode === "compare"
+    ? "Comparing this product across marketplaces…"
+    : "Searching live marketplaces…";
   grid.innerHTML = "<div class=\"skeleton\"></div>".repeat(2);
   progress.hidden = false;
   progressLabel.textContent = "Connecting to marketplaces…";
@@ -540,11 +647,16 @@ async function performSearch(query) {
     if (event.type === "marketplace") {
       marketplaceStatuses.set(event.marketplace.slug, event.marketplace);
       renderProgress();
-      count.textContent = "Matching the same products across stores…";
+      count.textContent = searchMode === "compare"
+        ? "Matching this product across stores…"
+        : "Gathering matching products…";
     }
     if (event.type === "complete") {
       searchCompleted = true;
       products = event.products || [];
+      searchMode = event.mode === "compare" || isProductUrlQuery(searchQuery) ? "compare" : "browse";
+      viewMode = searchMode === "compare" ? "compare" : "browse";
+      selectedGroupId = null;
       marketplaceStatuses = new Map(event.marketplaces.map((item) => [item.slug, item]));
       renderProgress(true);
       render();
@@ -592,49 +704,47 @@ async function performSearch(query) {
 }
 
 grid?.addEventListener("click", (event) => {
-  const chip = event.target.closest("[data-chip-filter]");
-  if (chip) {
-    chipFilter = chip.getAttribute("data-chip-filter") || "all";
+  const productCard = event.target.closest("[data-product-group]");
+  if (productCard) {
+    selectedGroupId = productCard.getAttribute("data-product-group");
+    viewMode = "compare";
+    chipFilter = "all";
+    tableSearch = "";
+    render();
+    grid.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  if (event.target.closest("[data-back-to-results]")) {
+    selectedGroupId = null;
+    viewMode = "browse";
+    chipFilter = "all";
+    tableSearch = "";
     render();
     return;
   }
 
-  if (event.target.closest("[data-buy-link]")) return;
-
-  const row = event.target.closest("[data-offer-url]");
-  if (row) {
-    const url = row.getAttribute("data-offer-url");
-    if (url && url !== "#") window.open(url, "_blank", "noopener,noreferrer");
+  const shareBtn = event.target.closest("[data-share-product]");
+  if (shareBtn) {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: "CompareX", text: "Compare prices on CompareX", url: shareUrl }).catch(() => {});
+    } else if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        shareBtn.textContent = "Link copied";
+        window.setTimeout(() => { shareBtn.textContent = "Share"; }, 1600);
+      }).catch(() => {});
+    }
+    return;
   }
-});
 
-grid?.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter" && event.key !== " ") return;
-  const row = event.target.closest("[data-offer-url]");
-  if (!row) return;
-  event.preventDefault();
-  const url = row.getAttribute("data-offer-url");
-  if (url && url !== "#") window.open(url, "_blank", "noopener,noreferrer");
+  if (event.target.closest("[data-buy-link]")) return;
 });
 
 grid?.addEventListener("change", (event) => {
   if (event.target.matches("[data-table-sort]")) {
     tableSort = event.target.value;
     render();
-  }
-});
-
-grid?.addEventListener("input", (event) => {
-  if (event.target.matches("[data-table-search]")) {
-    tableSearch = event.target.value;
-    const caretStart = event.target.selectionStart;
-    const caretEnd = event.target.selectionEnd;
-    render();
-    const next = grid.querySelector("[data-table-search]");
-    if (next) {
-      next.focus();
-      try { next.setSelectionRange(caretStart, caretEnd); } catch { /* ignore */ }
-    }
   }
 });
 

@@ -12,90 +12,24 @@ from services.comparison_engine import (
     select_best_per_marketplace,
 )
 from services.normalizer import finalize_products, normalize_title
-from services.scrapers.adidas import search_adidas
 from services.scrapers.ajio import search_ajio
 from services.scrapers.amazon import search_amazon
-from services.scrapers.apollo import search_apollo
-from services.scrapers.asics import search_asics
-from services.scrapers.bigbasket import search_bigbasket
-from services.scrapers.bewakoof import search_bewakoof
-from services.scrapers.blinkit import search_blinkit
-from services.scrapers.boddess import search_boddess
-from services.scrapers.croma import search_croma
-from services.scrapers.crossword import search_crossword
-from services.scrapers.firstcry import search_firstcry
 from services.scrapers.flipkart import search_flipkart
-from services.scrapers.headsupfortails import search_headsupfortails
-from services.scrapers.hnm import search_hnm
-from services.scrapers.instamart import search_instamart
-from services.scrapers.jiomart import search_jiomart
 from services.scrapers.lenskart import search_lenskart
-from services.scrapers.lifestyle import search_lifestyle
-from services.scrapers.maxfashion import search_maxfashion
 from services.scrapers.meesho import search_meesho
 from services.scrapers.myntra import search_myntra
-from services.scrapers.netmeds import search_netmeds
-from services.scrapers.nike import search_nike
 from services.scrapers.nykaa import search_nykaa
-from services.scrapers.pantaloons import search_pantaloons
-from services.scrapers.pharmeasy import search_pharmeasy
-from services.scrapers.puma import search_puma
 from services.scrapers.purplle import search_purplle
-from services.scrapers.reliance_digital import search_reliance_digital
-from services.scrapers.sapna import search_sapna
-from services.scrapers.sephora import search_sephora
-from services.scrapers.shoppersstop import search_shoppersstop
-from services.scrapers.skechers import search_skechers
-from services.scrapers.tatacliq import search_tatacliq
-from services.scrapers.tira import search_tira
-from services.scrapers.urbanladder import search_urbanladder
-from services.scrapers.vijay_sales import search_vijay_sales
-from services.scrapers.westside import search_westside
-from services.scrapers.zepto import search_zepto
-from services.scrapers.zara import search_zara
 
 MARKETPLACES = {
     "amazon": {"name": "Amazon India", "scraper": search_amazon, "strategy": "requests-with-playwright-fallback", "color": "#202531", "description": "Electronics, home & more"},
     "flipkart": {"name": "Flipkart", "scraper": search_flipkart, "strategy": "playwright", "color": "#2874f0", "description": "India's shopping destination"},
-    "myntra": {"name": "Myntra", "scraper": search_myntra, "strategy": "embedded-search-data", "color": "#f44380", "description": "Fashion & lifestyle"},
     "ajio": {"name": "AJIO", "scraper": search_ajio, "strategy": "public-api", "color": "#222222", "description": "Curated fashion"},
-    "croma": {"name": "Croma", "scraper": search_croma, "strategy": "playwright", "color": "#24a148", "description": "Electronics & appliances"},
-    "vijay-sales": {"name": "Vijay Sales", "scraper": search_vijay_sales, "strategy": "graphql", "color": "#e22b2f", "description": "Consumer electronics"},
-    "nykaa": {"name": "Nykaa", "scraper": search_nykaa, "strategy": "server-rendered", "color": "#ed5f7f", "description": "Beauty & wellness"},
-    "blinkit": {"name": "Blinkit", "scraper": search_blinkit, "strategy": "playwright", "color": "#f9d531", "description": "Instant grocery & essentials"},
-    "zepto": {"name": "Zepto", "scraper": search_zepto, "strategy": "playwright", "color": "#8a2be2", "description": "Quick commerce delivery"},
-    "bigbasket": {"name": "BigBasket", "scraper": search_bigbasket, "strategy": "server-rendered", "color": "#84c225", "description": "Groceries & daily essentials"},
-    "reliance-digital": {"name": "Reliance Digital", "scraper": search_reliance_digital, "strategy": "server-rendered", "color": "#e31d3b", "description": "Electronics & appliances"},
-    "tatacliq": {"name": "Tata CLiQ", "scraper": search_tatacliq, "strategy": "playwright", "color": "#212121", "description": "Fashion, electronics & home"},
-    "firstcry": {"name": "FirstCry", "scraper": search_firstcry, "strategy": "server-rendered", "color": "#ff6b35", "description": "Baby & kids products"},
-    "netmeds": {"name": "Netmeds", "scraper": search_netmeds, "strategy": "server-rendered", "color": "#43a047", "description": "Pharmacy & wellness"},
-    "pharmeasy": {"name": "PharmEasy", "scraper": search_pharmeasy, "strategy": "server-rendered", "color": "#10847e", "description": "Medicines & healthcare"},
+    "myntra": {"name": "Myntra", "scraper": search_myntra, "strategy": "embedded-search-data", "color": "#f44380", "description": "Fashion & lifestyle"},
     "meesho": {"name": "Meesho", "scraper": search_meesho, "strategy": "playwright", "color": "#9f2089", "description": "Fashion & lifestyle deals"},
-    "jiomart": {"name": "JioMart", "scraper": search_jiomart, "strategy": "playwright", "color": "#0078ad", "description": "Groceries & daily needs"},
-    "lenskart": {"name": "Lenskart", "scraper": search_lenskart, "strategy": "server-rendered", "color": "#0db7af", "description": "Eyewear & accessories"},
-    "hnm": {"name": "H&M", "scraper": search_hnm, "strategy": "playwright", "color": "#e50010", "description": "Fashion & apparel"},
-    "zara": {"name": "Zara", "scraper": search_zara, "strategy": "playwright", "color": "#000000", "description": "Fashion & apparel"},
-    "lifestyle": {"name": "Lifestyle", "scraper": search_lifestyle, "strategy": "server-rendered", "color": "#c8102e", "description": "Fashion & lifestyle"},
-    "maxfashion": {"name": "Max Fashion", "scraper": search_maxfashion, "strategy": "server-rendered", "color": "#e31837", "description": "Affordable fashion"},
-    "pantaloons": {"name": "Pantaloons", "scraper": search_pantaloons, "strategy": "server-rendered", "color": "#003da5", "description": "Fashion & family wear"},
-    "westside": {"name": "Westside", "scraper": search_westside, "strategy": "server-rendered", "color": "#1a1a1a", "description": "Fashion & lifestyle"},
-    "shoppersstop": {"name": "Shoppers Stop", "scraper": search_shoppersstop, "strategy": "server-rendered", "color": "#231f20", "description": "Premium fashion retail"},
-    "bewakoof": {"name": "Bewakoof", "scraper": search_bewakoof, "strategy": "server-rendered", "color": "#ffc001", "description": "Youth fashion & casual wear"},
-    "nike": {"name": "Nike", "scraper": search_nike, "strategy": "playwright", "color": "#111111", "description": "Sportswear & footwear"},
-    "adidas": {"name": "Adidas", "scraper": search_adidas, "strategy": "playwright", "color": "#000000", "description": "Sportswear & footwear"},
-    "puma": {"name": "Puma", "scraper": search_puma, "strategy": "server-rendered", "color": "#000000", "description": "Sportswear & footwear"},
-    "skechers": {"name": "Skechers", "scraper": search_skechers, "strategy": "server-rendered", "color": "#0057a8", "description": "Footwear & comfort wear"},
-    "asics": {"name": "ASICS", "scraper": search_asics, "strategy": "server-rendered", "color": "#001e62", "description": "Running & sports footwear"},
+    "nykaa": {"name": "Nykaa", "scraper": search_nykaa, "strategy": "server-rendered", "color": "#ed5f7f", "description": "Beauty & wellness"},
     "purplle": {"name": "Purplle", "scraper": search_purplle, "strategy": "server-rendered", "color": "#9c27b0", "description": "Beauty & personal care"},
-    "tira": {"name": "Tira", "scraper": search_tira, "strategy": "server-rendered", "color": "#212121", "description": "Beauty & cosmetics"},
-    "sephora": {"name": "Sephora", "scraper": search_sephora, "strategy": "playwright", "color": "#000000", "description": "Premium beauty"},
-    "boddess": {"name": "Boddess", "scraper": search_boddess, "strategy": "server-rendered", "color": "#d81b60", "description": "Beauty & skincare"},
-    "instamart": {"name": "Instamart", "scraper": search_instamart, "strategy": "playwright", "color": "#fc8019", "description": "Instant grocery delivery"},
-    "apollo": {"name": "Apollo Pharmacy", "scraper": search_apollo, "strategy": "server-rendered", "color": "#0072bc", "description": "Pharmacy & healthcare"},
-    "urbanladder": {"name": "Urban Ladder", "scraper": search_urbanladder, "strategy": "server-rendered", "color": "#e27a34", "description": "Furniture & home decor"},
-    "headsupfortails": {"name": "Heads Up For Tails", "scraper": search_headsupfortails, "strategy": "server-rendered", "color": "#f7941d", "description": "Pet supplies & accessories"},
-    "crossword": {"name": "Crossword", "scraper": search_crossword, "strategy": "server-rendered", "color": "#c41230", "description": "Books & stationery"},
-    "sapna": {"name": "Sapna Online", "scraper": search_sapna, "strategy": "server-rendered", "color": "#0066b3", "description": "Books & publications"},
+    "lenskart": {"name": "Lenskart", "scraper": search_lenskart, "strategy": "server-rendered", "color": "#0db7af", "description": "Eyewear & accessories"},
 }
 
 # Accessory phrases excluded unless the shopper explicitly searches for them.
@@ -179,81 +113,14 @@ PRODUCT_URL_HOSTS = {
     "www.myntra.com": "myntra",
     "ajio.com": "ajio",
     "www.ajio.com": "ajio",
-    "croma.com": "croma",
-    "www.croma.com": "croma",
-    "vijaysales.com": "vijay-sales",
-    "www.vijaysales.com": "vijay-sales",
     "nykaa.com": "nykaa",
     "www.nykaa.com": "nykaa",
-    "blinkit.com": "blinkit",
-    "www.blinkit.com": "blinkit",
-    "zeptonow.com": "zepto",
-    "www.zeptonow.com": "zepto",
-    "bigbasket.com": "bigbasket",
-    "www.bigbasket.com": "bigbasket",
-    "reliancedigital.in": "reliance-digital",
-    "www.reliancedigital.in": "reliance-digital",
-    "tatacliq.com": "tatacliq",
-    "www.tatacliq.com": "tatacliq",
-    "firstcry.com": "firstcry",
-    "www.firstcry.com": "firstcry",
-    "netmeds.com": "netmeds",
-    "www.netmeds.com": "netmeds",
-    "pharmeasy.in": "pharmeasy",
-    "www.pharmeasy.in": "pharmeasy",
     "meesho.com": "meesho",
     "www.meesho.com": "meesho",
-    "jiomart.com": "jiomart",
-    "www.jiomart.com": "jiomart",
     "lenskart.com": "lenskart",
     "www.lenskart.com": "lenskart",
-    "hm.com": "hnm",
-    "www2.hm.com": "hnm",
-    "zara.com": "zara",
-    "www.zara.com": "zara",
-    "lifestylestores.com": "lifestyle",
-    "www.lifestylestores.com": "lifestyle",
-    "maxfashion.in": "maxfashion",
-    "www.maxfashion.in": "maxfashion",
-    "pantaloons.com": "pantaloons",
-    "www.pantaloons.com": "pantaloons",
-    "westside.com": "westside",
-    "www.westside.com": "westside",
-    "shoppersstop.com": "shoppersstop",
-    "www.shoppersstop.com": "shoppersstop",
-    "bewakoof.com": "bewakoof",
-    "www.bewakoof.com": "bewakoof",
-    "nike.com": "nike",
-    "www.nike.com": "nike",
-    "adidas.co.in": "adidas",
-    "www.adidas.co.in": "adidas",
-    "in.puma.com": "puma",
-    "puma.com": "puma",
-    "skechers.in": "skechers",
-    "www.skechers.in": "skechers",
-    "asics.com": "asics",
-    "www.asics.com": "asics",
     "purplle.com": "purplle",
     "www.purplle.com": "purplle",
-    "tira.com": "tira",
-    "www.tira.com": "tira",
-    "sephora.nnnow.com": "sephora",
-    "sephora.in": "sephora",
-    "www.sephora.in": "sephora",
-    "boddess.com": "boddess",
-    "www.boddess.com": "boddess",
-    "swiggy.com": "instamart",
-    "www.swiggy.com": "instamart",
-    "apollopharmacy.in": "apollo",
-    "www.apollopharmacy.in": "apollo",
-    "urbanladder.com": "urbanladder",
-    "www.urbanladder.com": "urbanladder",
-    "headsupfortails.com": "headsupfortails",
-    "www.headsupfortails.com": "headsupfortails",
-    "crossword.in": "crossword",
-    "www.crossword.in": "crossword",
-    "sapnaonline.com": "sapna",
-    "www.sapnaonline.com": "sapna",
 }
 
 URL_PATH_NOISE = {
@@ -576,8 +443,24 @@ def _relevant_products(products, query):
     return _rank_products(kept, query)
 
 
+def _is_direct_compare_query(query, preloaded_slug) -> bool:
+    """URLs (and URL-seeded searches) skip browse and go straight to comparison."""
+    if preloaded_slug:
+        return True
+    text = (query or "").strip()
+    if text.lower().startswith(("http://", "https://")):
+        return True
+    return _product_url_source(text) is not None
+
+
+# How many ranked hits to keep per store / overall when browsing generic queries.
+_BROWSE_PER_STORE = 8
+_BROWSE_PRODUCT_CAP = 64
+
+
 def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
     effective_query, preloaded_slug, preloaded_results = _resolve_search_seed(query)
+    direct_compare = _is_direct_compare_query(query, preloaded_slug)
     targets = _targets(selected_stores)
     statuses = {slug: _status(slug) for slug in targets}
     results, errors = [], []
@@ -603,7 +486,10 @@ def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
             slug = futures[future]
             try:
                 store_products = _relevant_products(future.result(), effective_query)
-                store_products = select_best_per_marketplace(store_products, effective_query)
+                if direct_compare:
+                    store_products = select_best_per_marketplace(store_products, effective_query)
+                else:
+                    store_products = store_products[:_BROWSE_PER_STORE]
                 results.extend(store_products)
                 statuses[slug] = _status(slug, "completed", len(store_products))
                 emit({
@@ -627,13 +513,17 @@ def _run_live_search(query, selected_stores=None, emit=lambda _event: None):
                 })
 
     products, highlights = finalize_products(results)
-    products = select_best_per_marketplace(products, effective_query)
-    products = _rank_products(products, effective_query)
+    if direct_compare:
+        products = select_best_per_marketplace(products, effective_query)
+        products = _rank_products(products, effective_query)
+    else:
+        products = _rank_products(products, effective_query)[:_BROWSE_PRODUCT_CAP]
     comparisons = build_comparisons(products, effective_query)
     response = {
         "query": query,
         "source": "live",
         "cached": False,
+        "mode": "compare" if direct_compare else "browse",
         "products": products,
         "comparisons": comparisons,
         "marketplaces": list(statuses.values()),
