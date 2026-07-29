@@ -20,7 +20,7 @@ function marketplacePill(marketplace, duplicate = false) {
 function renderMarketplaceRibbon() {
   const container = document.querySelector("[data-marketplace-ribbon]");
   if (!container) return;
-  const marketplaces = MARKETPLACES.slice(0, 13);
+  const marketplaces = MARKETPLACES;
   const group = (duplicate = false) => marketplaces.map((marketplace) => (
     `<span class="ribbon-market"${duplicate ? ' aria-hidden="true"' : ""}><img src="${marketplace.logo}" alt="" width="24" height="24"><strong>${marketplace.name}</strong></span>`
   )).join("");

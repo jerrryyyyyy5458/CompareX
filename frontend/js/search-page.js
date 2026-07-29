@@ -2,6 +2,7 @@
 import { api } from "./api.js?v=live5";
 import { formatPrice } from "./utils.js";
 import { initializeTheme } from "./theme.js";
+import { recommendOffer, animateIntelligenceCounters } from "./intelligence.js?v=1";
 
 const form = document.querySelector("[data-results-form]");
 const input = document.querySelector("[data-results-input]");
@@ -22,12 +23,19 @@ let searchRun = 0;
 let tableSort = "low";
 let chipFilter = "all";
 let tableSearch = "";
+/** @type {"browse" | "compare"} */
+let viewMode = "compare";
+/** Selected product focus title when drilling from browse → compare (no re-scrape). */
+let focusQuery = "";
 /** @type {Map<string, object>} slug -> store metadata from GET /stores */
 let registeredBySlug = new Map();
 /** @type {Map<string, string>} lowercase name -> slug */
 let slugByName = new Map();
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=400&q=80";
+const BROWSE_STOPWORDS = new Set([
+  "with", "for", "and", "the", "pack", "pcs", "of", "by", "new", "ml", "gm", "g", "kg", "oz",
+]);
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -57,6 +65,32 @@ function tokenize(value = "") {
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter((token) => token.length > 1);
+}
+
+function isProductUrl(query = "") {
+  try {
+    const url = new URL(String(query).trim());
+    return ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Mirror backend browse heuristic: short category queries browse; URLs / longer names compare. */
+function isBrowseQuery(query = "") {
+  if (isProductUrl(query)) return false;
+  const tokens = tokenize(query);
+  if (tokens.length <= 1) return true;
+  if (tokens.length === 2) {
+    if (/^(?:[a-z]{0,4})?\d+[a-z0-9]*$/.test(tokens[1])) return false;
+    return true;
+  }
+  return false;
+}
+
+function extractBrand(title = "") {
+  const tokens = tokenize(title);
+  return tokens[0] || "";
 }
 
 function registerStores(stores = []) {
@@ -249,6 +283,7 @@ function buildUnifiedComparison(sourceProducts, query) {
     id: "unified-search-comparison",
     product_name: displayName,
     image,
+    brand: extractBrand(displayName),
     offers,
     lowest_price: lowest,
     highest_price: highest,
@@ -256,6 +291,113 @@ function buildUnifiedComparison(sourceProducts, query) {
     best_marketplace: offers[0]?.marketplace,
     offer_count: offers.length,
   };
+}
+
+function identityTokens(title = "") {
+  return tokenize(title).filter((token) => !BROWSE_STOPWORDS.has(token));
+}
+
+function tokenOverlap(left, right) {
+  if (!left.size || !right.size) return 0;
+  let hits = 0;
+  for (const token of left) {
+    if (right.has(token)) hits += 1;
+  }
+  return hits / Math.max(left.size, right.size);
+}
+
+/** Cluster scraped listings into shoppable product families for the browse grid. */
+function buildBrowseResults(sourceProducts, query) {
+  const candidates = filteredProducts(sourceProducts)
+    .map((product) => ({
+      product,
+      score: matchScore(product.title || "", query),
+      price: parseAmount(product.current_price ?? product.price),
+      tokens: new Set(identityTokens(product.title || "")),
+    }))
+    .filter((item) => item.price != null)
+    .sort((a, b) => b.score - a.score || a.price - b.price);
+
+  const clusters = [];
+  for (const item of candidates) {
+    let bestCluster = null;
+    let bestScore = 0;
+    for (const cluster of clusters) {
+      const score = tokenOverlap(item.tokens, cluster.tokens);
+      if (score > bestScore) {
+        bestScore = score;
+        bestCluster = cluster;
+      }
+    }
+
+    if (bestCluster && bestScore >= 0.42) {
+      const market = marketplaceKey(item.product.store || item.product.marketplace || "");
+      const existing = bestCluster.byMarket.get(market);
+      if (!existing || item.score > existing.score + 0.05 || (Math.abs(item.score - existing.score) <= 0.05 && item.price < existing.price)) {
+        bestCluster.byMarket.set(market, item);
+      }
+      for (const token of item.tokens) bestCluster.tokens.add(token);
+      if (item.score > bestCluster.seed.score) bestCluster.seed = item;
+    } else {
+      clusters.push({
+        tokens: new Set(item.tokens),
+        byMarket: new Map([[marketplaceKey(item.product.store || item.product.marketplace || ""), item]]),
+        seed: item,
+      });
+    }
+  }
+
+  return clusters.map((cluster, index) => {
+    const members = [...cluster.byMarket.values()];
+    const prices = members.map((member) => member.price);
+    const ratings = members.map((member) => Number(member.product.rating)).filter((value) => Number.isFinite(value) && value > 0);
+    const title = cluster.seed.product.title || query;
+    return {
+      id: `browse-${index}`,
+      title,
+      brand: extractBrand(title),
+      image: members.find((member) => member.product.image_url || member.product.image)?.product.image_url
+        || members.find((member) => member.product.image_url || member.product.image)?.product.image
+        || null,
+      lowest_price: Math.min(...prices),
+      marketplace_count: members.length,
+      rating: ratings.length ? (ratings.reduce((sum, value) => sum + value, 0) / ratings.length) : null,
+      focus_query: title,
+      relevance: cluster.seed.score,
+    };
+  }).sort((a, b) => b.relevance - a.relevance || a.lowest_price - b.lowest_price);
+}
+
+function browseResultsHtml(results) {
+  if (!results.length) {
+    return `<div class="empty-state"><h2>No products found</h2><p>Try a broader search or enable more marketplaces.</p></div>`;
+  }
+
+  return `<section class="cx-browse-panel">
+    <div class="cx-browse-header">
+      <p class="cx-summary-eyebrow">Product results</p>
+      <h2 class="cx-summary-title">Choose a product to compare prices</h2>
+      <p class="cx-summary-product">Showing ${results.length} product${results.length === 1 ? "" : "s"} for “${escapeHtml(searchQuery)}”</p>
+    </div>
+    <div class="cx-browse-grid">
+      ${results.map((item) => {
+        const image = safeHttpUrl(item.image, FALLBACK_IMAGE);
+        const rating = item.rating != null ? `★ ${item.rating.toFixed(1)}` : "";
+        return `<button type="button" class="cx-browse-card" data-focus-product="${escapeHtml(item.focus_query)}">
+          <div class="cx-browse-media">
+            <img src="${image}" alt="${escapeHtml(item.title)}" loading="lazy">
+          </div>
+          <div class="cx-browse-body">
+            ${item.brand ? `<span class="cx-browse-brand">${escapeHtml(item.brand)}</span>` : ""}
+            <strong class="cx-browse-title">${escapeHtml(item.title)}</strong>
+            <p class="cx-browse-price">Starts from <strong>${formatPrice(item.lowest_price)}</strong></p>
+            <p class="cx-browse-meta">Available on ${item.marketplace_count} marketplace${item.marketplace_count === 1 ? "" : "s"}${rating ? ` · ${rating}` : ""}</p>
+            <span class="cx-browse-cta">Compare prices →</span>
+          </div>
+        </button>`;
+      }).join("")}
+    </div>
+  </section>`;
 }
 
 function sortOffers(offers, sortKey) {
@@ -294,27 +436,157 @@ function visibleOffers(comparison) {
   return sortOffers(offers, tableSort);
 }
 
-function summaryBar(comparison, offers) {
+function avgOfferRating(offers) {
+  const ratings = offers.map((offer) => Number(offer.rating)).filter((value) => Number.isFinite(value) && value > 0);
+  if (!ratings.length) return null;
+  return ratings.reduce((sum, value) => sum + value, 0) / ratings.length;
+}
+
+function productSpecsFromTitle(title = "") {
+  const specs = [];
+  const normalized = String(title);
+  const spf = normalized.match(/\bSPF\s*\d+/i);
+  const pa = normalized.match(/\bPA\++/i);
+  const size = normalized.match(/\b\d+(?:\.\d+)?\s?(?:ml|g|gm|kg|oz|gb|tb)\b/i);
+  if (spf) specs.push(spf[0].toUpperCase().replace(/\s+/g, ""));
+  if (pa) specs.push(pa[0].toUpperCase());
+  if (size) specs.push(size[0]);
+  const tokens = tokenize(title).filter((token) => !BROWSE_STOPWORDS.has(token) && token.length > 3);
+  for (const token of tokens.slice(1, 6)) {
+    if (specs.length >= 5) break;
+    const label = token.replace(/^\w/, (char) => char.toUpperCase());
+    if (!specs.some((spec) => spec.toLowerCase() === label.toLowerCase())) specs.push(label);
+  }
+  return specs.slice(0, 5);
+}
+
+function productHero(comparison, offers) {
+  const image = safeHttpUrl(comparison.image || offers.find((offer) => offer.image_url)?.image_url, FALLBACK_IMAGE);
+  const brand = comparison.brand || extractBrand(comparison.product_name);
+  const rating = avgOfferRating(offers);
+  const specs = productSpecsFromTitle(comparison.product_name);
+  const description = `Live prices for ${comparison.product_name} across trusted Indian marketplaces. Pick the best deal without opening a dozen tabs.`;
+
+  return `<div class="cx-product-hero">
+    <div class="cx-product-media">
+      <img src="${image}" alt="${escapeHtml(comparison.product_name)}" loading="lazy">
+    </div>
+    <div class="cx-product-info">
+      ${brand ? `<p class="cx-product-brand">${escapeHtml(brand)}</p>` : ""}
+      <h2 class="cx-product-title">${escapeHtml(comparison.product_name)}</h2>
+      <div class="cx-product-rating">
+        ${rating != null ? `<span class="cx-stars">★ ${rating.toFixed(1)}</span><span class="cx-rating-label">Average store rating</span>` : `<span class="cx-rating-label">Ratings updating live</span>`}
+      </div>
+      <p class="cx-product-desc">${escapeHtml(description)}</p>
+      ${specs.length ? `<div class="cx-spec-row">${specs.map((spec) => `<span class="cx-spec-chip">${escapeHtml(spec)}</span>`).join("")}</div>` : ""}
+      <div class="cx-product-actions">
+        <button type="button" class="cx-ghost-btn" data-wishlist-btn>♡ Wishlist</button>
+        <button type="button" class="cx-ghost-btn" data-share-btn>↗ Share</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function dealSummaryCard(comparison, offers) {
   const prices = offers.map((offer) => offer.price);
   const lowest = prices.length ? Math.min(...prices) : comparison.lowest_price;
   const highest = prices.length ? Math.max(...prices) : comparison.highest_price;
   const best = offers.find((offer) => offer.price === lowest) || comparison.offers[0];
   const savings = prices.length > 1 ? highest - lowest : 0;
-
   const marketCount = comparison.offer_count || comparison.offers.length;
-  return `<div class="cx-summary-bar">
-    <div class="cx-summary-main">
-      <p class="cx-summary-eyebrow">CompareX intelligence</p>
-      <h2 class="cx-summary-title">Compared across ${marketCount} marketplace${marketCount === 1 ? "" : "s"}</h2>
-      <p class="cx-summary-product">${escapeHtml(comparison.product_name)}</p>
-    </div>
-    <div class="cx-summary-stats">
-      <div><span>Lowest Price</span><strong>${formatPrice(lowest)}</strong></div>
-      <div><span>Highest Price</span><strong>${formatPrice(highest)}</strong></div>
+  const updated = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  return `<aside class="cx-deal-card">
+    <span class="cx-best-badge is-large">🏆 Best Deal</span>
+    <p class="cx-deal-label">Lowest Price</p>
+    <p class="cx-deal-price">${formatPrice(lowest)}</p>
+    <p class="cx-deal-store">on ${escapeHtml(best?.marketplace || "—")}</p>
+    <div class="cx-deal-grid">
       <div><span>You Save</span><strong class="is-save">${savings > 0 ? formatPrice(savings) : "—"}</strong></div>
-      <div><span>Best Deal</span><strong class="is-best">${escapeHtml(best?.marketplace || "—")}</strong></div>
+      <div><span>Compared Across</span><strong>${marketCount} store${marketCount === 1 ? "" : "s"}</strong></div>
+      <div><span>Best Marketplace</span><strong class="is-best">${escapeHtml(best?.marketplace || "—")}</strong></div>
+      <div><span>Last Updated</span><strong>${escapeHtml(updated)}</strong></div>
     </div>
+    ${best?.url ? `<a class="cx-buy-btn cx-deal-cta" href="${safeHttpUrl(best.url)}" target="_blank" rel="noopener noreferrer" data-buy-link>View best deal →</a>` : ""}
+  </aside>`;
+}
+
+function analyticsStrip(comparison, offers) {
+  const prices = offers.map((offer) => offer.price);
+  const lowest = prices.length ? Math.min(...prices) : comparison.lowest_price;
+  const highest = prices.length ? Math.max(...prices) : comparison.highest_price;
+  const average = prices.length ? prices.reduce((sum, value) => sum + value, 0) / prices.length : lowest;
+  const savings = prices.length > 1 ? highest - lowest : 0;
+  const best = offers.find((offer) => offer.price === lowest) || comparison.offers[0];
+  const marketCount = comparison.offer_count || comparison.offers.length;
+
+  return `<div class="cx-analytics">
+    <div><span>Compared across</span><strong>${marketCount} marketplace${marketCount === 1 ? "" : "s"}</strong></div>
+    <div><span>Lowest Price</span><strong>${formatPrice(lowest)}</strong></div>
+    <div><span>Highest Price</span><strong>${formatPrice(highest)}</strong></div>
+    <div><span>Average Price</span><strong>${formatPrice(average)}</strong></div>
+    <div><span>Potential Savings</span><strong class="is-save">${savings > 0 ? formatPrice(savings) : "—"}</strong></div>
+    <div><span>Best Deal</span><strong class="is-best">${escapeHtml(best?.marketplace || "—")}</strong></div>
   </div>`;
+}
+
+function intelligenceCard(offers) {
+  const insight = recommendOffer(offers);
+  if (!insight) return "";
+
+  const offer = insight.offer;
+  const meta = marketplaceMeta(offer.marketplace);
+  const flags = [
+    insight.highlights.lowestPrice ? "Lowest Price" : null,
+    insight.highlights.fastestDelivery ? "Fastest Delivery" : null,
+    insight.highlights.highestRated ? "Highest Rated Seller" : null,
+  ].filter(Boolean);
+
+  return `<section class="cx-intel" aria-label="CompareX Intelligence recommendation">
+    <div class="cx-intel-glow" aria-hidden="true"></div>
+    <div class="cx-intel-head">
+      <div>
+        <p class="cx-intel-kicker">🏆 CompareX Intelligence</p>
+        <h3 class="cx-intel-title">Balanced recommendation</h3>
+      </div>
+      <span class="cx-best-badge is-large">Best Deal</span>
+    </div>
+    <div class="cx-intel-body">
+      <div class="cx-intel-primary">
+        <div class="cx-intel-store">
+          ${storeIdentityHtml(meta, 36)}
+          <div>
+            <span class="cx-intel-label">Recommended marketplace</span>
+            <strong>${escapeHtml(offer.marketplace || meta.name)}</strong>
+          </div>
+        </div>
+        <p class="cx-intel-price" data-cx-count="${offer.price}" data-cx-format="inr">${formatPrice(offer.price)}</p>
+        <div class="cx-intel-meta">
+          <span>Compared across <strong data-cx-count="${insight.marketCount}">${insight.marketCount}</strong> marketplace${insight.marketCount === 1 ? "" : "s"}</span>
+          <span class="is-save">You Save <strong${insight.savings > 0 ? ` data-cx-count="${Math.round(insight.savings)}" data-cx-format="inr"` : ""}>${insight.savings > 0 ? formatPrice(insight.savings) : "—"}</strong></span>
+        </div>
+        ${flags.length ? `<div class="cx-intel-flags">${flags.map((flag) => `<span>${escapeHtml(flag)}</span>`).join("")}</div>` : ""}
+        ${offer.url ? `<a class="cx-buy-btn cx-intel-cta" href="${safeHttpUrl(offer.url)}" target="_blank" rel="noopener noreferrer" data-buy-link>View recommended deal →</a>` : ""}
+      </div>
+      <div class="cx-intel-side">
+        <div class="cx-intel-score">
+          <span>Overall Score</span>
+          <p><strong data-cx-count="${insight.score}">${insight.score}</strong><small> / 100</small></p>
+        </div>
+        <p class="cx-intel-why-label">Why CompareX recommends this</p>
+        <ul class="cx-intel-reasons">
+          ${insight.reasons.map((reason) => `<li>✓ ${escapeHtml(reason)}</li>`).join("")}
+        </ul>
+        <div class="cx-intel-breakdown" aria-label="Score breakdown">
+          <div><span>Price</span><strong>${Math.round(insight.scores.price)}</strong></div>
+          <div><span>Delivery</span><strong>${Math.round(insight.scores.delivery)}</strong></div>
+          <div><span>Rating</span><strong>${Math.round(insight.scores.rating)}</strong></div>
+          <div><span>Discount</span><strong>${Math.round(insight.scores.discount)}</strong></div>
+          <div><span>Stock</span><strong>${Math.round(insight.scores.availability)}</strong></div>
+        </div>
+      </div>
+    </div>
+  </section>`;
 }
 
 function filterChips(comparison) {
@@ -323,6 +595,7 @@ function filterChips(comparison) {
   ).entries()];
 
   return `<div class="cx-chip-row" role="toolbar" aria-label="Filter marketplaces">
+    <span class="cx-chip-label">Filter Marketplace</span>
     <button type="button" class="cx-chip${chipFilter === "all" ? " is-active" : ""}" data-chip-filter="all">All</button>
     ${markets.map(([slug, name]) => `
       <button type="button" class="cx-chip${chipFilter === slug ? " is-active" : ""}" data-chip-filter="${escapeHtml(slug)}">
@@ -334,35 +607,35 @@ function filterChips(comparison) {
 
 function toolbar() {
   return `<div class="cx-toolbar">
-    <label class="cx-search-wrap">
-      <span class="cx-search-icon" aria-hidden="true">⌕</span>
-      <input type="search" class="cx-table-search" data-table-search placeholder="Search marketplaces..." value="${escapeHtml(tableSearch)}" aria-label="Search marketplaces">
-    </label>
     <label class="cx-sort-wrap">
       <span>Sort By</span>
       <select data-table-sort aria-label="Sort comparison table">
         <option value="low"${tableSort === "low" ? " selected" : ""}>Lowest Price</option>
         <option value="high"${tableSort === "high" ? " selected" : ""}>Highest Price</option>
         <option value="discount"${tableSort === "discount" ? " selected" : ""}>Highest Discount</option>
-        <option value="rating"${tableSort === "rating" ? " selected" : ""}>Rating</option>
-        <option value="delivery"${tableSort === "delivery" ? " selected" : ""}>Delivery Time</option>
+        <option value="delivery"${tableSort === "delivery" ? " selected" : ""}>Fastest Delivery</option>
+        <option value="rating"${tableSort === "rating" ? " selected" : ""}>Highest Rating</option>
         <option value="alpha"${tableSort === "alpha" ? " selected" : ""}>Alphabetical</option>
         <option value="relevance"${tableSort === "relevance" ? " selected" : ""}>Most Relevant</option>
       </select>
+    </label>
+    <label class="cx-search-wrap">
+      <span class="cx-search-label">Search Marketplace</span>
+      <span class="cx-search-icon" aria-hidden="true">⌕</span>
+      <input type="search" class="cx-table-search" data-table-search placeholder="Amazon, Nykaa, Myntra…" value="${escapeHtml(tableSearch)}" aria-label="Search marketplaces">
     </label>
   </div>`;
 }
 
 function tableRow(offer, isBest) {
   const meta = marketplaceMeta(offer.marketplace);
-  const title = escapeHtml(offer.title || "");
-  const image = safeHttpUrl(offer.image_url, FALLBACK_IMAGE);
   const url = safeHttpUrl(offer.url);
   const original = parseAmount(offer.original_price);
   const discount = discountLabel(offer);
   const rating = offer.rating != null ? `★ ${escapeHtml(String(offer.rating))}` : "—";
   const delivery = escapeHtml(deliveryLabel(offer));
   const availability = escapeHtml(offer.availability || "Check availability");
+  const inStock = String(offer.availability || "").toLowerCase().includes("in stock");
 
   return `<tr class="cx-row${isBest ? " is-best-deal" : ""}" data-offer-url="${url}" tabindex="0" role="link">
     <td class="cx-col-store">
@@ -373,31 +646,25 @@ function tableRow(offer, isBest) {
         </div>
       </div>
     </td>
-    <td class="cx-col-logo">
-      ${storeIdentityHtml(meta, 28)}
+    <td class="cx-col-logo">${storeIdentityHtml(meta, 28)}</td>
+    <td class="cx-col-price">
+      <strong>${formatPrice(offer.price)}</strong>
+      ${isBest ? `<span class="cx-lowest-tag">Lowest</span>` : ""}
     </td>
-    <td class="cx-col-image">
-      <img class="cx-product-thumb" src="${image}" alt="${title}" loading="lazy">
-    </td>
-    <td class="cx-col-name">
-      <span class="cx-product-name">${title}</span>
-    </td>
-    <td class="cx-col-price"><strong>${formatPrice(offer.price)}</strong></td>
     <td class="cx-col-original">${original && original > offer.price ? `<del>${formatPrice(original)}</del>` : "—"}</td>
     <td class="cx-col-discount"><span class="cx-discount">${escapeHtml(discount)}</span></td>
-    <td class="cx-col-availability">${availability}</td>
-    <td class="cx-col-rating">${rating}</td>
     <td class="cx-col-delivery">${delivery}</td>
+    <td class="cx-col-rating">${rating}</td>
+    <td class="cx-col-availability"><span class="cx-stock${inStock ? " is-in" : ""}">${availability}</span></td>
+    <td class="cx-col-seller">${escapeHtml(offer.marketplace || meta.name)}</td>
     <td class="cx-col-buy">
-      <a class="cx-buy-btn" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>Buy</a>
+      <a class="cx-buy-btn" href="${url}" target="_blank" rel="noopener noreferrer" data-buy-link>View Deal</a>
     </td>
   </tr>`;
 }
 
 function mobileCard(offer, isBest) {
   const meta = marketplaceMeta(offer.marketplace);
-  const title = escapeHtml(offer.title || "");
-  const image = safeHttpUrl(offer.image_url, FALLBACK_IMAGE);
   const url = safeHttpUrl(offer.url);
   const original = parseAmount(offer.original_price);
   const discount = discountLabel(offer);
@@ -408,52 +675,73 @@ function mobileCard(offer, isBest) {
       <strong>${escapeHtml(offer.marketplace || meta.name)}</strong>
       ${isBest ? `<span class="cx-best-badge">🏆 Best Deal</span>` : ""}
     </div>
-    <div class="cx-mobile-body">
-      <img class="cx-product-thumb" src="${image}" alt="${title}" loading="lazy">
-      <div>
-        <p class="cx-product-name">${title}</p>
-        <div class="cx-mobile-price">
-          <strong>${formatPrice(offer.price)}</strong>
-          ${original && original > offer.price ? `<del>${formatPrice(original)}</del>` : ""}
-          <span class="cx-discount">${escapeHtml(discount)}</span>
-        </div>
-        <small>${escapeHtml(offer.availability || "Check availability")} · ${escapeHtml(deliveryLabel(offer))}</small>
-      </div>
+    <div class="cx-mobile-price">
+      <strong>${formatPrice(offer.price)}</strong>
+      ${original && original > offer.price ? `<del>${formatPrice(original)}</del>` : ""}
+      <span class="cx-discount">${escapeHtml(discount)}</span>
     </div>
-    <span class="cx-buy-btn">Buy</span>
+    <small>${escapeHtml(offer.availability || "Check availability")} · ${escapeHtml(deliveryLabel(offer))}</small>
+    <span class="cx-buy-btn">View Deal</span>
   </a>`;
 }
 
 function comparisonTable(comparison) {
   const offers = visibleOffers(comparison);
+  const allOffers = comparison.offers || [];
+  const nav = focusQuery && isBrowseQuery(searchQuery)
+    ? `<div class="cx-compare-nav"><button type="button" class="cx-back-btn" data-back-to-browse>← Back to products</button></div>`
+    : "";
+
   if (!offers.length) {
-    return `${summaryBar(comparison, comparison.offers)}
+    return `<section class="cx-comparison-panel" data-comparison-id="${escapeHtml(comparison.id)}">
+      ${nav}
+      <div class="cx-product-layout">
+        ${productHero(comparison, allOffers)}
+        ${dealSummaryCard(comparison, allOffers)}
+      </div>
+      ${analyticsStrip(comparison, allOffers)}
       ${toolbar()}
       ${filterChips(comparison)}
-      <div class="empty-state"><h2>No matching marketplaces</h2><p>Try another filter or search term.</p></div>`;
+      <div class="empty-state"><h2>No matching marketplaces</h2><p>Try another filter or search term.</p></div>
+    </section>`;
   }
 
   const lowest = Math.min(...offers.map((offer) => offer.price));
 
   return `<section class="cx-comparison-panel" data-comparison-id="${escapeHtml(comparison.id)}">
-    ${summaryBar(comparison, offers)}
+    ${nav}
+    <div class="cx-product-layout">
+      ${productHero(comparison, offers)}
+      ${dealSummaryCard(comparison, offers)}
+    </div>
+    ${analyticsStrip(comparison, offers)}
+    ${intelligenceCard(offers)}
+    <div class="cx-table-header">
+      <div>
+        <p class="cx-summary-eyebrow">Live marketplace prices</p>
+        <h3 class="cx-table-title">Compare Prices</h3>
+      </div>
+      <div class="cx-trust-row">
+        <span>100% live listings</span>
+        <span>Safe checkout on store</span>
+      </div>
+    </div>
     ${toolbar()}
     ${filterChips(comparison)}
     <div class="cx-table-shell">
       <table class="cx-compare-table">
         <thead>
           <tr>
-            <th>Store</th>
+            <th>Marketplace</th>
             <th>Logo</th>
-            <th>Product Image</th>
-            <th>Product Name</th>
             <th>Price</th>
             <th>Original Price</th>
-            <th>Discount %</th>
-            <th>Availability</th>
-            <th>Rating</th>
+            <th>Discount</th>
             <th>Delivery</th>
-            <th>Buy</th>
+            <th>Rating</th>
+            <th>Availability</th>
+            <th>Seller</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -468,7 +756,21 @@ function comparisonTable(comparison) {
 }
 
 function render() {
-  const comparison = buildUnifiedComparison(products, searchQuery);
+  if (!products.length) {
+    count.textContent = "No marketplace matches yet";
+    grid.innerHTML = `<div class="empty-state"><h2>No matching products yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
+    return;
+  }
+
+  if (viewMode === "browse") {
+    const results = buildBrowseResults(products, searchQuery);
+    count.textContent = `${results.length} product${results.length === 1 ? "" : "s"} found`;
+    grid.innerHTML = browseResultsHtml(results);
+    return;
+  }
+
+  const compareAgainst = focusQuery || searchQuery;
+  const comparison = buildUnifiedComparison(products, compareAgainst);
   if (!comparison) {
     count.textContent = "No marketplace matches yet";
     grid.innerHTML = `<div class="empty-state"><h2>No matching comparisons yet</h2><p>Try another product name or choose more marketplaces.</p></div>`;
@@ -478,6 +780,7 @@ function render() {
   const offers = visibleOffers(comparison);
   count.textContent = `1 comparison · ${offers.length} marketplace${offers.length === 1 ? "" : "s"} shown`;
   grid.innerHTML = comparisonTable(comparison);
+  animateIntelligenceCounters(grid);
 }
 
 function renderProgress(isComplete = false) {
@@ -498,7 +801,7 @@ function renderProgress(isComplete = false) {
   }).join("");
 }
 
-async function performSearch(query) {
+async function performSearch(query, options = {}) {
   activeSource?.close();
   const currentRun = ++searchRun;
   searchQuery = query;
@@ -516,14 +819,17 @@ async function performSearch(query) {
     return;
   }
 
+  const requestedFocus = options.focus || "";
   products = [];
+  focusQuery = "";
+  viewMode = isBrowseQuery(query) ? "browse" : "compare";
   chipFilter = "all";
   tableSearch = "";
   tableSort = "low";
   marketplaceStatuses.clear();
   let searchCompleted = false;
-  count.textContent = "Searching live marketplaces…";
-  grid.innerHTML = "<div class=\"skeleton\"></div>".repeat(2);
+  count.textContent = viewMode === "browse" ? "Finding products across stores…" : "Searching live marketplaces…";
+  grid.innerHTML = "<div class=\"skeleton\"></div>".repeat(viewMode === "browse" ? 4 : 2);
   progress.hidden = false;
   progressLabel.textContent = "Connecting to marketplaces…";
   progressCount.textContent = `0 / ${stores.length} complete`;
@@ -539,12 +845,18 @@ async function performSearch(query) {
     if (event.type === "marketplace") {
       marketplaceStatuses.set(event.marketplace.slug, event.marketplace);
       renderProgress();
-      count.textContent = "Matching the same products across stores…";
+      count.textContent = viewMode === "browse"
+        ? "Collecting product matches…"
+        : "Matching the same products across stores…";
     }
     if (event.type === "complete") {
       searchCompleted = true;
       products = event.products || [];
       marketplaceStatuses = new Map(event.marketplaces.map((item) => [item.slug, item]));
+      if (requestedFocus && isBrowseQuery(query)) {
+        focusQuery = requestedFocus;
+        viewMode = "compare";
+      }
       renderProgress(true);
       render();
       source.close();
@@ -591,6 +903,50 @@ async function performSearch(query) {
 }
 
 grid?.addEventListener("click", (event) => {
+  const wishlist = event.target.closest("[data-wishlist-btn]");
+  if (wishlist) {
+    wishlist.classList.toggle("is-active");
+    wishlist.textContent = wishlist.classList.contains("is-active") ? "♥ Saved" : "♡ Wishlist";
+    return;
+  }
+  const share = event.target.closest("[data-share-btn]");
+  if (share) {
+    const shareUrl = window.location.href;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        share.textContent = "✓ Link copied";
+        setTimeout(() => { share.textContent = "↗ Share"; }, 1600);
+      }).catch(() => {});
+    }
+    return;
+  }
+
+  const back = event.target.closest("[data-back-to-browse]");
+  if (back) {
+    focusQuery = "";
+    viewMode = "browse";
+    const params = new URLSearchParams(window.location.search);
+    params.delete("focus");
+    history.replaceState({}, "", `?${params.toString()}`);
+    render();
+    return;
+  }
+
+  const browseCard = event.target.closest("[data-focus-product]");
+  if (browseCard) {
+    focusQuery = browseCard.getAttribute("data-focus-product") || "";
+    viewMode = "compare";
+    chipFilter = "all";
+    tableSearch = "";
+    const params = new URLSearchParams(window.location.search);
+    params.set("query", searchQuery);
+    params.set("focus", focusQuery);
+    history.replaceState({}, "", `?${params.toString()}`);
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
   const chip = event.target.closest("[data-chip-filter]");
   if (chip) {
     chipFilter = chip.getAttribute("data-chip-filter") || "all";
@@ -638,6 +994,7 @@ grid?.addEventListener("input", (event) => {
 });
 
 const query = new URLSearchParams(window.location.search).get("query") || "";
+const initialFocus = new URLSearchParams(window.location.search).get("focus") || "";
 input.value = query;
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -672,5 +1029,5 @@ initializeTheme();
     grid.innerHTML = `<div class="empty-state"><h2>Could not load marketplaces</h2><p>Start the Flask API at <code>http://127.0.0.1:5000</code>, then refresh.</p></div>`;
     return;
   }
-  performSearch(query);
+  performSearch(query, { focus: initialFocus });
 })();
