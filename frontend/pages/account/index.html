@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My account — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Signed-in account surface */
+    .account-page { padding: 138px 0 80px; }.account-page h1 { margin: 10px 0 38px; font-size: clamp(36px, 5vw, 59px); letter-spacing: -.07em; }.account-page h1 em { color:var(--accent);font-style:normal; }.account-layout { display:grid;grid-template-columns:260px 1fr;gap:18px; }.account-menu,.account-content { background:var(--surface);border:1px solid var(--border);border-radius:18px; }.account-menu { padding:13px;align-self:start; }.account-menu a { display:block;padding:11px 10px;color:var(--muted);border-radius:9px;font-size:12px;font-weight:600; }.account-menu a.active,.account-menu a:hover { color:var(--text);background:var(--card); }.account-content { min-height:300px;padding:30px; }.account-content h2 { margin-bottom:9px;font-size:24px; }.account-content p { color:var(--muted);font-size:13px; }.account-details { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:25px; }.account-field { padding:16px;background:var(--card);border:1px solid var(--border);border-radius:11px; }.account-field span { display:block;margin-bottom:5px;color:var(--subtle);font-size:10px; }.account-field strong { font-size:12px; }.account-empty { margin-top:25px;padding:24px;background:var(--card);border-radius:12px;text-align:center; }@media(max-width:767px){.account-page{padding-top:105px}.account-layout{display:block}.account-menu{display:flex;gap:3px;overflow:auto;margin-bottom:13px;white-space:nowrap}.account-content{padding:22px}.account-details{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <!-- Account navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a href="../categories/">Categories</a><a href="../stores/">Stores</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap account-page">
+    <!-- Account profile -->
+    <p class="eyebrow">Your CompareX</p><h1>Account <em>overview.</em></h1>
+    <div class="account-layout"><nav class="account-menu"><a class="active" href="./">Profile</a><a href="../wishlist/">Wishlist</a><a href="../compare/">Comparisons</a></nav><section class="account-content"><h2 data-account-title>Welcome to CompareX</h2><p data-account-copy>Sign in to save products, track prices and keep your comparisons in sync.</p><div class="account-details" data-account-details hidden><div class="account-field"><span>Email</span><strong data-profile-email></strong></div><div class="account-field"><span>Member status</span><strong>CompareX member</strong></div></div><div class="account-empty" data-account-empty><a class="button button-primary" href="../../" data-signin>Sign in from the homepage →</a></div></section></div>
+  </main>
+  <script type="module">
+    import { initializeTheme } from "../../js/theme.js";
+    import { api } from "../../js/api.js";
+    initializeTheme();
+    const token = localStorage.getItem("comparex-token");
+    if (token) {
+      api.profile = () => fetch("http://127.0.0.1:5000/profile", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : Promise.reject());
+      api.profile().then(({ user }) => { document.querySelector("[data-account-title]").textContent = `Hello${user.name ? `, ${user.name}` : ""}.`; document.querySelector("[data-account-copy]").textContent = "Your saved choices and price signals live here."; document.querySelector("[data-profile-email]").textContent = user.email; document.querySelector("[data-account-details]").hidden = false; document.querySelector("[data-account-empty]").hidden = true; }).catch(() => localStorage.removeItem("comparex-token"));
+    }
+  </script>
+</body>
+</html>

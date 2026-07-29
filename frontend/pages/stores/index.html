@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stores — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Marketplace directory */
+    .stores-page { padding: 138px 0 80px; }.stores-page h1 { max-width: 670px; margin: 10px 0 17px; font-size: clamp(38px, 6vw, 70px); line-height: .98; letter-spacing: -.075em; }.stores-page h1 em { color: var(--accent); font-style: normal; }.stores-page > p:last-of-type { max-width: 500px; margin-bottom: 42px; color: var(--muted); }.marketplace-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }.marketplace-card { display: flex; flex-direction: column; min-height: 220px; padding: 23px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; transition: .25s var(--ease-out); }.marketplace-card:hover { border-color: var(--accent); box-shadow: 0 18px 40px rgba(0,0,0,.16); transform: translateY(-5px); }.marketplace-logo { display: grid; width: 52px; height: 52px; margin-bottom: auto; place-items: center; color: #fff; border-radius: 15px; font-size: 22px; font-weight: 800; }.marketplace-card strong { margin-top: 37px; font-size: 17px; letter-spacing: -.04em; }.marketplace-card p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }.marketplace-card span:last-child { margin-top: 12px; color: var(--accent); font-size: 11px; font-weight: 700; }@media(max-width:767px){.stores-page{padding-top:105px}.marketplace-grid{grid-template-columns:repeat(2,1fr);gap:10px}.marketplace-card{min-height:178px;padding:17px}.marketplace-card strong{margin-top:25px}.desktop-nav{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Marketplace navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a href="../categories/">Categories</a><a class="active" href="./">Stores</a><a href="../brands/">Brands</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap stores-page">
+    <!-- Marketplace directory -->
+    <p class="eyebrow">Six stores. One calm decision.</p><h1>Search your favourites <em>at once.</em></h1><p>CompareX looks across India’s leading shopping destinations, so finding the best offer doesn’t require a dozen tabs.</p>
+    <div class="marketplace-grid">
+      <a class="marketplace-card" href="../search/?query=electronics&store=amazon"><span class="marketplace-logo" style="background:#202531">a</span><strong>Amazon</strong><p>Electronics, home & more</p><span>Search Amazon →</span></a>
+      <a class="marketplace-card" href="../search/?query=electronics&store=flipkart"><span class="marketplace-logo" style="background:#2874f0">F</span><strong>Flipkart</strong><p>India’s shopping destination</p><span>Search Flipkart →</span></a>
+      <a class="marketplace-card" href="../search/?query=fashion&store=myntra"><span class="marketplace-logo" style="background:#f44380">M</span><strong>Myntra</strong><p>Fashion & lifestyle</p><span>Search Myntra →</span></a>
+      <a class="marketplace-card" href="../search/?query=fashion&store=ajio"><span class="marketplace-logo" style="background:#202020">A</span><strong>AJIO</strong><p>Curated fashion</p><span>Search AJIO →</span></a>
+      <a class="marketplace-card" href="../search/?query=beauty&store=nykaa"><span class="marketplace-logo" style="background:#ed5f7f">N</span><strong>Nykaa</strong><p>Beauty & wellness</p><span>Search Nykaa →</span></a>
+      <a class="marketplace-card" href="../search/?query=electronics&store=reliance"><span class="marketplace-logo" style="background:#e31d3b">R</span><strong>Reliance Digital</strong><p>Tech & appliances</p><span>Search Reliance →</span></a>
+    </div>
+  </main>
+  <script type="module">import { initializeTheme } from "../../js/theme.js"; initializeTheme();</script>
+</body>
+</html>

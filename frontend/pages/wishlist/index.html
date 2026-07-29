@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wishlist — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css"><link rel="stylesheet" href="../../css/global.css"><link rel="stylesheet" href="../../css/navbar.css"><link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Saved product directory */
+    .wishlist-page{padding:138px 0 80px}.wishlist-page h1{margin:10px 0 35px;font-size:clamp(38px,5vw,62px);letter-spacing:-.075em}.wishlist-page h1 em{color:var(--accent);font-style:normal}.saved-list{display:grid;gap:10px;max-width:800px}.saved-item{display:flex;align-items:center;gap:15px;padding:15px 17px;background:var(--surface);border:1px solid var(--border);border-radius:14px}.saved-item .heart{display:grid;width:38px;height:38px;place-items:center;color:var(--accent);background:var(--accent-soft);border-radius:11px;font-size:18px}.saved-item strong{display:block;font-size:12px}.saved-item span{display:block;margin-top:3px;color:var(--muted);font-size:10px}.saved-item button{margin-left:auto;padding:7px 9px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:7px;font-size:10px}.saved-item button:hover{color:var(--accent);border-color:var(--accent)}.wishlist-empty{padding:60px 20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:19px}.wishlist-empty h2{font-size:24px}.wishlist-empty p{color:var(--muted);font-size:13px}@media(max-width:767px){.wishlist-page{padding-top:105px}.desktop-nav{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Wishlist navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a href="../categories/">Categories</a><a href="../stores/">Stores</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap wishlist-page">
+    <!-- Locally saved products -->
+    <p class="eyebrow">Keep an eye on it</p><h1>Your <em>wishlist.</em></h1><section class="saved-list" data-wishlist-page></section>
+  </main>
+  <script type="module">
+    import { initializeTheme } from "../../js/theme.js";
+    initializeTheme();
+    const list = document.querySelector("[data-wishlist-page]");
+    const read = () => { try { return JSON.parse(localStorage.getItem("comparex-wishlist") || "[]"); } catch { return []; } };
+    const render = () => { const ids = read(); list.innerHTML = ids.length ? ids.map((id) => `<article class="saved-item"><span class="heart">♥</span><div><strong>Saved product</strong><span>Product reference: ${id}</span></div><a class="button button-secondary" style="min-height:34px;font-size:10px" href="../product/?id=${encodeURIComponent(id)}">View</a><button type="button" data-remove="${id}">Remove</button></article>`).join("") : `<div class="wishlist-empty"><h2>Nothing saved yet</h2><p>Tap the heart on any product you want to revisit.</p><a class="button button-primary" href="../../">Explore products →</a></div>`; list.querySelectorAll("[data-remove]").forEach(button => button.addEventListener("click",()=>{localStorage.setItem("comparex-wishlist",JSON.stringify(read().filter(id=>id!==button.dataset.remove)));render();})); };
+    render();
+  </script>
+</body>
+</html>

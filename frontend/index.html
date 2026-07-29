@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Compare prices across India's leading marketplaces with CompareX.">
+  <title>CompareX — Shop smarter, every time.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/hero.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/footer.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/autocomplete.css">
+</head>
+<body>
+  <!-- Application shell -->
+  <div class="site-shell">
+    <!-- Sticky navigation -->
+    <header class="navbar" id="navbar">
+      <a class="brand" href="/" aria-label="CompareX home"><span class="brand-mark">×</span>Compare<span>X</span></a>
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a class="active" href="/">Discover</a>
+        <a href="pages/categories/">Categories</a>
+        <a href="pages/stores/">Stores</a>
+        <a href="pages/brands/">Brands</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-button theme-toggle" type="button" aria-label="Toggle theme" data-theme-toggle>
+          <span aria-hidden="true">☼</span>
+        </button>
+        <a class="icon-button wishlist-link" href="pages/wishlist/" aria-label="Wishlist">
+          <span aria-hidden="true">♡</span><span class="badge" data-wishlist-count>0</span>
+        </a>
+        <button class="account-trigger" type="button" data-login-trigger>Log in <span aria-hidden="true">↗</span></button>
+        <button class="menu-button" type="button" aria-label="Open navigation menu" aria-expanded="false" data-menu-trigger>
+          <span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Curved animated navigation drawer -->
+    <aside class="mobile-drawer" aria-hidden="true" data-mobile-drawer>
+      <div class="drawer-header">
+        <span class="brand"><span class="brand-mark">×</span>Compare<span>X</span></span>
+        <button class="icon-button" type="button" aria-label="Close navigation" data-menu-close>×</button>
+      </div>
+      <div class="orbit-menu" data-orbit-menu tabindex="0" aria-label="Animated navigation menu">
+        <span class="orbit-guide" aria-hidden="true"></span>
+        <nav aria-label="Quick navigation">
+          <a href="/" data-orbit-item><span class="orbit-icon" aria-hidden="true">⌂</span><span>Discover</span></a>
+          <a href="pages/categories/" data-orbit-item><span class="orbit-icon" aria-hidden="true">◫</span><span>Categories</span></a>
+          <a href="pages/stores/" data-orbit-item><span class="orbit-icon" aria-hidden="true">▣</span><span>Stores</span></a>
+          <a href="pages/brands/" data-orbit-item><span class="orbit-icon" aria-hidden="true">◇</span><span>Brands</span></a>
+          <a href="pages/wishlist/" data-orbit-item><span class="orbit-icon" aria-hidden="true">♡</span><span>Wishlist</span></a>
+          <a href="pages/compare/" data-orbit-item><span class="orbit-icon" aria-hidden="true">⇄</span><span>Compare</span></a>
+          <a href="pages/account/" data-orbit-item><span class="orbit-icon" aria-hidden="true">●</span><span>My account</span></a>
+          <a href="pages/contact/" data-orbit-item><span class="orbit-icon" aria-hidden="true">?</span><span>Support</span></a>
+        </nav>
+        <p class="orbit-hint"><span>↑↓</span> Scroll or use arrow keys</p>
+      </div>
+      <span class="drawer-edge" aria-hidden="true"></span>
+      <button class="button button-primary drawer-login" type="button" data-login-trigger>Log in <span>→</span></button>
+    </aside>
+    <div class="drawer-scrim" data-drawer-scrim></div>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero section-wrap">
+        <div class="hero-copy reveal">
+          <p class="eyebrow"><span class="live-dot"></span>India’s smarter shopping layer</p>
+          <h1>Stop overpaying.<br><em>Compare</em> before you buy.</h1>
+          <p class="hero-description">One search checks the stores you trust, so you can make the right choice in seconds—not tabs.</p>
+          <form class="hero-search" data-search-form>
+            <label class="search-input">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <span class="dynamic-placeholder" data-dynamic-placeholder aria-hidden="true">
+                <span>Paste your</span>
+                <span class="placeholder-market-slot" data-placeholder-market-slot></span>
+                <span>product link here</span>
+              </span>
+              <input type="search" name="query" autocomplete="off" aria-label="Search a product or paste a marketplace link" data-search-input>
+              <button class="clear-search" type="button" aria-label="Clear search" data-clear-search>×</button>
+            </label>
+            <button class="button button-primary search-submit" type="submit">Compare prices <span aria-hidden="true">→</span></button>
+          </form>
+          <div class="search-hints"><span>Popular right now</span><button type="button" data-search-suggestion>iPhone 16</button><button type="button" data-search-suggestion>AirPods Pro</button><button type="button" data-search-suggestion>Running shoes</button></div>
+        </div>
+        <div class="hero-visual reveal">
+          <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+          <article class="hero-product-card">
+            <div class="product-glow"></div>
+            <div class="hero-product-media"><img src="assets/images/hero-headphones.svg" alt="Wireless over-ear headphones" width="380" height="360"></div>
+            <div class="hero-product-meta"><span>Premium Audio</span><strong>Find it for <b>₹8,499</b></strong></div>
+          </article>
+          <article class="price-float float-amazon"><span class="market-dot amazon-dot">a</span><div><small>Amazon</small><strong>₹9,990</strong></div><span class="price-down">↓ 15%</span></article>
+          <article class="price-float float-flipkart"><span class="market-dot flipkart-dot">F</span><div><small>Flipkart</small><strong>₹8,499</strong></div><span class="best-price">Best price</span></article>
+          <div class="hero-trust"><span class="avatars">● ● ●</span><span>Trusted by <strong>50k+</strong><br>savvy shoppers</span></div>
+        </div>
+      </section>
+
+      <!-- Marketplace ribbon -->
+      <section class="marketplace-ribbon" aria-label="Supported marketplaces">
+        <div class="ribbon-track" data-marketplace-ribbon></div>
+      </section>
+
+      <!-- Category explorer -->
+      <section class="section-wrap categories-section" id="categories">
+        <div class="section-heading reveal"><div><p class="eyebrow">Explore anything</p><h2>Pick your next <em>obsession.</em></h2></div><a class="text-link" href="pages/categories/">View all categories <span>→</span></a></div>
+        <div class="category-wheel reveal" data-category-wheel>
+          <button class="wheel-control wheel-prev" type="button" aria-label="Previous categories" data-wheel-prev>←</button>
+          <div class="wheel-track" data-wheel-track>
+            <a href="pages/categories/electronics/" class="category-chip is-featured"><span class="category-image"><img src="https://img.icons8.com/?size=188&id=C8twQXUl1qoA&format=png" alt="" width="78" height="78"></span><span>Electronics</span></a>
+            <a href="pages/categories/fashion/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/?size=188&id=AfhjyeFesqib&format=png" alt="" width="78" height="78"></span><span>Fashion</span></a>
+            <a href="pages/categories/gaming/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/3d-fluency/188/controller.png" alt="" width="78" height="78" loading="lazy"></span><span>Gaming</span></a>
+            <a href="pages/categories/beauty/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/3d-fluency/188/lipstick.png" alt="" width="78" height="78" loading="lazy"></span><span>Beauty</span></a>
+            <a href="pages/categories/shoes/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/?size=188&id=aWEa54JxogC6&format=png" alt="" width="78" height="78" loading="lazy"></span><span>Shoes</span></a>
+            <a href="pages/categories/books/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/3d-fluency/188/books.png" alt="" width="78" height="78" loading="lazy"></span><span>Books</span></a>
+            <a href="pages/categories/furniture/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/3d-fluency/188/armchair.png" alt="" width="78" height="78" loading="lazy"></span><span>Furniture</span></a>
+            <a href="pages/categories/sports/" class="category-chip"><span class="category-image"><img src="https://img.icons8.com/3d-fluency/188/football2.png" alt="" width="78" height="78" loading="lazy"></span><span>Sports</span></a>
+          </div>
+          <button class="wheel-control wheel-next" type="button" aria-label="Next categories" data-wheel-next>→</button>
+        </div>
+      </section>
+
+      <!-- Trending products -->
+      <section class="section-wrap product-section">
+        <div class="section-heading reveal"><div><p class="eyebrow">Price drops worth knowing</p><h2>Trending <em>today.</em></h2></div><a class="text-link" href="pages/search/">Browse all deals <span>→</span></a></div>
+        <div class="product-grid" data-trending-products></div>
+      </section>
+
+      <!-- Brand strip -->
+      <section class="section-wrap brand-section reveal">
+        <div class="brand-spotlight"><p class="eyebrow">Brands people love</p><h2>The best picks,<br><em>all in one place.</em></h2><a class="button button-secondary" href="pages/brands/">Explore brands <span>→</span></a></div>
+        <div class="brand-grid">
+          <a href="pages/brands/detail.html?brand=apple"><img src="https://cdn.simpleicons.org/apple/ffffff" alt="" width="42" height="42"><strong>Apple</strong></a>
+          <a href="pages/brands/detail.html?brand=samsung"><img src="https://cdn.simpleicons.org/samsung/ffffff" alt="" width="58" height="42"><strong>Samsung</strong></a>
+          <a href="pages/brands/detail.html?brand=nike"><img src="https://cdn.simpleicons.org/nike/ffffff" alt="" width="54" height="42"><strong>Nike</strong></a>
+          <a href="pages/brands/detail.html?brand=sony"><img src="https://cdn.simpleicons.org/sony/ffffff" alt="" width="58" height="42"><strong>Sony</strong></a>
+          <a href="pages/brands/detail.html?brand=adidas"><img src="https://cdn.simpleicons.org/adidas/ffffff" alt="" width="48" height="42"><strong>adidas</strong></a>
+          <a href="pages/brands/detail.html?brand=boat"><img src="https://cdn.simpleicons.org/boat/ffffff" alt="" width="58" height="42"><strong>boAt</strong></a>
+          <a href="pages/brands/detail.html?brand=oneplus"><img src="https://cdn.simpleicons.org/oneplus/ffffff" alt="" width="42" height="42"><strong>OnePlus</strong></a>
+          <a href="pages/brands/detail.html?brand=puma"><img src="https://cdn.simpleicons.org/puma/ffffff" alt="" width="52" height="42"><strong>Puma</strong></a>
+        </div>
+      </section>
+
+      <!-- Stores -->
+      <section class="section-wrap stores-section">
+        <div class="section-heading reveal"><div><p class="eyebrow">Your usual stores, unified</p><h2>More choices.<br><em>Less tab switching.</em></h2></div><a class="text-link" href="pages/stores/">See every store <span>→</span></a></div>
+        <div class="marketplace-ribbons reveal" data-store-ribbons aria-label="Marketplace directory"></div>
+      </section>
+
+      <!-- Value proposition -->
+      <section class="section-wrap value-section">
+        <div class="value-intro reveal"><p class="eyebrow">The CompareX advantage</p><h2>Buy with absolute <em>clarity.</em></h2><p>We turn a frustrating, scattered search into a calm, confident decision.</p></div>
+        <div class="value-list">
+          <article class="value-card reveal"><span>01</span><h3>See every price</h3><p>We scan leading marketplaces at once, then surface the deals that genuinely matter.</p></article>
+          <article class="value-card reveal"><span>02</span><h3>Know the real deal</h3><p>Price history and trusted seller signals keep “discounts” honest and transparent.</p></article>
+          <article class="value-card reveal"><span>03</span><h3>Choose confidently</h3><p>Put product details, ratings and offers side by side before spending a rupee.</p></article>
+        </div>
+      </section>
+
+      <!-- Statistics -->
+      <section class="section-wrap stats-section reveal">
+        <div><strong data-counter="1200000">0</strong><span>Products compared</span></div><div><strong data-counter="6">0</strong><span>Marketplaces connected</span></div><div><strong data-counter="18">0</strong><span>Average saving (%)</span></div><div><strong data-counter="4.9">0</strong><span>Shopper rating</span></div>
+      </section>
+
+      <!-- Testimonial -->
+      <section class="section-wrap testimonial-section reveal"><span class="quote-mark">“</span><blockquote>I was about to buy the same headphones for ₹2,000 more. CompareX found a better deal in seconds—it's now the first tab I open.</blockquote><div class="testimonial-person"><div class="person-avatar">AP</div><div><strong>Ananya Patel</strong><span>Verified CompareX shopper</span></div></div></section>
+
+      <!-- Newsletter -->
+      <section class="section-wrap newsletter-section reveal"><div><p class="eyebrow">Stay one step ahead</p><h2>Good prices don’t<br><em>wait around.</em></h2></div><form class="newsletter-form" data-newsletter-form><label for="newsletter-email">Weekly price drops, curated for you.</label><div><input id="newsletter-email" type="email" placeholder="you@email.com" required><button class="button button-primary" type="submit">Keep me posted <span>→</span></button></div><small data-newsletter-message>Zero spam. Only signals worth your attention.</small></form></section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer section-wrap">
+      <div class="footer-top"><div><a class="brand" href="/"><span class="brand-mark">×</span>Compare<span>X</span></a><p>India’s price intelligence layer.<br>Spend smarter, every time.</p></div><div class="footer-links"><div><strong>Explore</strong><a href="pages/categories/">Categories</a><a href="pages/stores/">Stores</a><a href="pages/brands/">Brands</a></div><div><strong>Account</strong><a href="pages/wishlist/">Wishlist</a><button type="button" data-login-trigger>Log in</button><a href="pages/account/">My account</a></div><div><strong>Help</strong><a href="pages/about/">About us</a><a href="pages/privacy/">Privacy</a><a href="pages/contact/">Contact</a></div></div></div>
+      <div class="footer-bottom"><span>© 2026 CompareX. Made for smarter shopping.</span><div><a href="#" aria-label="Instagram">ig</a><a href="#" aria-label="X">𝕏</a><a href="#" aria-label="LinkedIn">in</a></div></div>
+    </footer>
+  </div>
+
+  <!-- Compare dock -->
+  <aside class="compare-dock" aria-label="Selected products for comparison" data-compare-dock>
+    <div class="compare-items" data-compare-items></div><button class="button button-primary" type="button" data-compare-action>Compare <span data-compare-count>0</span> items <span>→</span></button>
+  </aside>
+
+  <!-- Login modal -->
+  <div class="modal-backdrop" data-login-modal aria-hidden="true"><section class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title"><button class="modal-close" type="button" aria-label="Close" data-login-close>×</button><div class="login-copy"><span class="brand"><span class="brand-mark">×</span>Compare<span>X</span></span><p>Spend smarter.<br>Starting today.</p><small>Sign in to save favourites, track prices and compare anytime.</small></div><form class="login-form" data-login-form><h2 id="login-title">Welcome back</h2><label>Email<input type="email" name="email" autocomplete="email" required placeholder="you@email.com"></label><label>Password<input type="password" name="password" autocomplete="current-password" required placeholder="••••••••"></label><div class="login-options"><label class="checkbox-label"><input type="checkbox" name="remember">Remember me</label><a href="#">Forgot password?</a></div><button class="button button-primary" type="submit">Log in <span>→</span></button><p class="form-message" data-login-message></p><p class="register-prompt">New to CompareX? <button type="button" data-register-trigger>Create an account</button></p></form></section></div>
+
+  <script type="module" src="js/app.js?v=ac1"></script>
+</body>
+</html>

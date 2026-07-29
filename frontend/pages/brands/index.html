@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brands — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css">
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/navbar.css">
+  <link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Brand catalogue */
+    .brands-page { padding: 138px 0 80px; }.brands-page h1 { margin: 10px 0 29px; font-size: clamp(38px, 6vw, 70px); line-height: .98; letter-spacing: -.075em; }.brands-page h1 em { color: var(--accent); font-style: normal; }.brand-search { display: flex; align-items: center; gap: 9px; max-width: 550px; padding: 0 14px; margin-bottom: 42px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; }.brand-search input { width: 100%; height: 48px; color: var(--text); background: transparent; border: 0; outline: 0; }.brand-grid-page { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }.brand-card { display: flex; min-height: 145px; padding: 20px; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 17px; transition: .25s; }.brand-card img { width: auto; max-width: 74px; height: 48px; object-fit: contain; filter: var(--brand-logo-filter); transition: transform .25s; }.brand-card img.is-color { filter: none; }.brand-card strong { font-size: 13px; font-weight: 700; letter-spacing: -.025em; }.brand-card:hover { color: var(--text); border-color: var(--accent); box-shadow: 0 12px 30px rgba(255,122,26,.12); transform: translateY(-4px); }.brand-card:hover img { transform: scale(1.08); }.brand-card[hidden] { display:none; }@media(max-width:767px){.brands-page{padding-top:105px}.brand-grid-page{grid-template-columns:repeat(2,1fr);gap:9px}.brand-card{min-height:118px;padding:14px}.brand-card img{max-width:60px;height:39px}.desktop-nav{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Brand catalogue navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a href="../categories/">Categories</a><a href="../stores/">Stores</a><a class="active" href="./">Brands</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap brands-page">
+    <!-- Searchable brand directory -->
+    <p class="eyebrow">Made by the names you know</p><h1>Find your favourite <em>brands.</em></h1>
+    <label class="brand-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search brands" data-brand-search></label>
+    <div class="brand-grid-page" data-brand-grid>
+      <a class="brand-card" href="detail.html?brand=apple" data-brand><img src="https://cdn.simpleicons.org/apple/ffffff" alt="" width="74" height="48"><strong>Apple</strong></a>
+      <a class="brand-card" href="detail.html?brand=samsung" data-brand><img src="https://cdn.simpleicons.org/samsung/ffffff" alt="" width="74" height="48"><strong>Samsung</strong></a>
+      <a class="brand-card" href="detail.html?brand=nike" data-brand><img src="https://cdn.simpleicons.org/nike/ffffff" alt="" width="74" height="48"><strong>Nike</strong></a>
+      <a class="brand-card" href="detail.html?brand=sony" data-brand><img src="https://cdn.simpleicons.org/sony/ffffff" alt="" width="74" height="48"><strong>Sony</strong></a>
+      <a class="brand-card" href="detail.html?brand=adidas" data-brand><img src="https://cdn.simpleicons.org/adidas/ffffff" alt="" width="74" height="48"><strong>adidas</strong></a>
+      <a class="brand-card" href="detail.html?brand=dyson" data-brand><img class="is-color" src="https://www.google.com/s2/favicons?domain=dyson.com&sz=128" alt="" width="74" height="48"><strong>Dyson</strong></a>
+      <a class="brand-card" href="detail.html?brand=boat" data-brand><img src="https://cdn.simpleicons.org/boat/ffffff" alt="" width="74" height="48"><strong>boAt</strong></a>
+      <a class="brand-card" href="detail.html?brand=lego" data-brand><img class="is-color" src="https://www.google.com/s2/favicons?domain=lego.com&sz=128" alt="" width="74" height="48"><strong>LEGO</strong></a>
+      <a class="brand-card" href="detail.html?brand=oneplus" data-brand><img src="https://cdn.simpleicons.org/oneplus/ffffff" alt="" width="74" height="48"><strong>OnePlus</strong></a>
+      <a class="brand-card" href="detail.html?brand=puma" data-brand><img src="https://cdn.simpleicons.org/puma/ffffff" alt="" width="74" height="48"><strong>Puma</strong></a>
+      <a class="brand-card" href="detail.html?brand=loreal" data-brand><img class="is-color" src="https://www.google.com/s2/favicons?domain=loreal.com&sz=128" alt="" width="74" height="48"><strong>L'Oréal</strong></a>
+      <a class="brand-card" href="detail.html?brand=philips" data-brand><img class="is-color" src="https://www.google.com/s2/favicons?domain=philips.com&sz=128" alt="" width="74" height="48"><strong>Philips</strong></a>
+    </div>
+  </main>
+  <script type="module">
+    import { initializeTheme } from "../../js/theme.js";
+    initializeTheme();
+    document.querySelector("[data-brand-search]").addEventListener("input", (event) => {
+      const query = event.currentTarget.value.trim().toLowerCase();
+      document.querySelectorAll("[data-brand]").forEach((brand) => { brand.hidden = !brand.textContent.toLowerCase().includes(query); });
+    });
+  </script>
+</body>
+</html>

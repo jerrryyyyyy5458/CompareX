@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — CompareX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/variables.css"><link rel="stylesheet" href="../../css/global.css"><link rel="stylesheet" href="../../css/navbar.css"><link rel="stylesheet" href="../../css/responsive.css">
+  <style>
+    /* Contact form */
+    .contact-page{display:grid;grid-template-columns:.8fr 1.2fr;gap:80px;padding:150px 0 90px}.contact-page h1{margin:10px 0 17px;font-size:clamp(42px,6vw,70px);line-height:.98;letter-spacing:-.075em}.contact-page h1 em{color:var(--accent);font-style:normal}.contact-intro>p:last-child{max-width:360px;color:var(--muted);line-height:1.75}.contact-method{margin-top:34px}.contact-method span{display:block;margin-bottom:5px;color:var(--subtle);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.contact-method a{font-size:14px;font-weight:700}.contact-form{padding:30px;background:var(--surface);border:1px solid var(--border);border-radius:20px}.contact-form label{display:block;margin-bottom:16px;color:var(--muted);font-size:11px;font-weight:600}.contact-form input,.contact-form textarea{display:block;width:100%;margin-top:7px;padding:12px;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:9px;outline:0}.contact-form textarea{min-height:125px;resize:vertical}.contact-form input:focus,.contact-form textarea:focus{border-color:var(--accent)}.form-note{min-height:15px;margin:12px 0 0;color:var(--accent);font-size:11px}@media(max-width:767px){.contact-page{display:block;padding-top:105px}.contact-form{margin-top:35px;padding:22px}.desktop-nav{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Contact navigation -->
+  <header class="navbar is-scrolled"><a class="brand" href="../../"><span class="brand-mark">×</span>Compare<span>X</span></a><nav class="desktop-nav"><a href="../../">Discover</a><a href="../categories/">Categories</a><a href="../stores/">Stores</a></nav><div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme">☼</button></div></header>
+  <main class="section-wrap contact-page">
+    <!-- Contact copy -->
+    <section class="contact-intro"><p class="eyebrow">We’re listening</p><h1>How can we <em>help?</em></h1><p>Found an incorrect price or have an idea that will make shopping clearer? Send it our way.</p><div class="contact-method"><span>Email us</span><a href="mailto:hello@comparex.in">hello@comparex.in</a></div></section>
+    <!-- Contact form -->
+    <form class="contact-form" data-contact-form><label>Your name<input type="text" name="name" autocomplete="name" required placeholder="Name"></label><label>Email address<input type="email" name="email" autocomplete="email" required placeholder="you@email.com"></label><label>What’s on your mind?<textarea name="message" required placeholder="Tell us how we can help…"></textarea></label><button class="button button-primary" type="submit">Send message →</button><p class="form-note" data-contact-message></p></form>
+  </main>
+  <script type="module">import { initializeTheme } from "../../js/theme.js"; initializeTheme(); document.querySelector("[data-contact-form]").addEventListener("submit",(event)=>{event.preventDefault();event.currentTarget.reset();document.querySelector("[data-contact-message]").textContent="Thanks—we’ll get back to you shortly.";});</script>
+</body>
+</html>
